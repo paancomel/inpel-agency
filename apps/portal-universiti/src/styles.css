@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #10231d;
+  --color-forest: #123f32;
+  --color-leaf: #247158;
+  --color-mint: #dff2e9;
+  --color-sun: #f4b860;
+  --color-cream: #fbfaf5;
+  --color-mist: #eef4f1;
+  --font-sans: "Aptos", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Georgia", "Times New Roman", serif;
+}
+
+:root {
+  color: var(--color-ink);
+  background: var(--color-cream);
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline-color: var(--color-leaf);
+  outline-offset: 3px;
+}
+
+::selection {
+  color: white;
+  background: var(--color-leaf);
+}
+
+@utility field-control {
+  width: 100%;
+  border: 1px solid var(--color-slate-300);
+  background: white;
+  padding: 0.75rem 0.875rem;
+  color: var(--color-ink);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+
+  &:focus {
+    border-color: var(--color-leaf);
+    box-shadow: 0 0 0 3px rgb(36 113 88 / 0.14);
+    outline: none;
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(calc(-50% - 1.25rem));
+  }
+}
+
+.marquee-track {
+  animation: marquee 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

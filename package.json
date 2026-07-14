@@ -1,0 +1,22 @@
+{
+  "name": "agency-web",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "build": "turbo run build",
+    "clean": "turbo run clean",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "turbo": "^2.10.4",
+    "typescript": "catalog:",
+    "vitest": "^4.1.10"
+  }
+}

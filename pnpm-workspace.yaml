@@ -1,0 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+allowBuilds:
+  core-js: false
+
+catalog:
+  typescript: ^5.9.3
