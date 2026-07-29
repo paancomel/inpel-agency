@@ -14,6 +14,6 @@ describe("public review rate-limit migration", () => {
     expect(migration).not.toContain("ip_address");
     expect(migration).toContain("create trigger reviews_enforce_submission_rate_limit");
     expect(migration).toContain("current_setting('request.path', true) = 'rpc/submit_review_for_moderation'");
-    expect(migration).toContain("raise exception using errcode = 'PGRST'");
+    expect(migration).toMatch(/raise exception using\s+errcode = 'PGRST'/);
   });
 });
