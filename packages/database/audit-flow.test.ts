@@ -27,8 +27,28 @@ interface SelectIdsBuilder {
   };
 }
 
+interface SelectByColumnBuilder {
+  select(columns: "id"): {
+    eq(column: string, value: string): PromiseLike<{
+      data: Array<{ id: string }> | null;
+      error: DatabaseError | null;
+    }>;
+  };
+}
+
 interface InsertBuilder {
   insert(value: unknown): PromiseLike<MutationResult>;
+}
+
+interface UpdateByIdBuilder {
+  update(value: unknown): {
+    eq(column: "id", value: string): {
+      select(columns: "id"): PromiseLike<{
+        data: Array<{ id: string }> | null;
+        error: DatabaseError | null;
+      }>;
+    };
+  };
 }
 
 interface DeleteBySessionBuilder {
@@ -126,6 +146,33 @@ async function insertRows<TableName extends PublicTableName>(
   return (client.from(tableName) as unknown as InsertBuilder).insert(value);
 }
 
+async function selectIdsByColumn<TableName extends PublicTableName>(
+  client: TypedSupabaseClient,
+  tableName: TableName,
+  column: string,
+  value: string,
+) {
+  return (client.from(tableName) as unknown as SelectByColumnBuilder).select("id").eq(column, value);
+}
+
+async function updateById<TableName extends PublicTableName>(
+  client: TypedSupabaseClient,
+  tableName: TableName,
+  id: string,
+  value: Partial<TablesInsert<TableName>>,
+) {
+  return (client.from(tableName) as unknown as UpdateByIdBuilder).update(value).eq("id", id).select("id");
+}
+
+function createIntruderAccount(runId: string, role: AuditAccount["role"], label: string): AuditAccount {
+  const runTag = runId.replaceAll("-", "");
+  return {
+    email: `qa-audit+${runTag}-${label}@example.test`,
+    password: `Qa!${runTag}-9z`,
+    role,
+  };
+}
+
 async function deleteIds(service: TypedSupabaseClient, tableName: PublicTableName, ids: readonly string[]): Promise<void> {
   if (ids.length === 0) return;
   const { error } = await (service.from(tableName) as unknown as DeleteBuilder).delete().in("id", ids);
@@ -170,19 +217,39 @@ describe("Supabase three-portal integration audit", () => {
       const studentUser = await createUser(service, fixtures.accounts.student);
       const representativeUser = await createUser(service, fixtures.accounts.representative);
       const adminUser = await createUser(service, fixtures.accounts.admin);
-      createdAuthUserIds.push(parentUser.id, studentUser.id, representativeUser.id, adminUser.id);
+      const intruderParentAccount = createIntruderAccount(fixtures.runId, "parent", "other-parent");
+      const intruderStudentAccount = createIntruderAccount(fixtures.runId, "student", "other-student");
+      const intruderRepresentativeAccount = createIntruderAccount(fixtures.runId, "university_rep", "other-representative");
+      const intruderParentUser = await createUser(service, intruderParentAccount);
+      const intruderStudentUser = await createUser(service, intruderStudentAccount);
+      const intruderRepresentativeUser = await createUser(service, intruderRepresentativeAccount);
+      createdAuthUserIds.push(
+        parentUser.id,
+        studentUser.id,
+        representativeUser.id,
+        adminUser.id,
+        intruderParentUser.id,
+        intruderStudentUser.id,
+        intruderRepresentativeUser.id,
+      );
 
       const profileInsert = await insertRows(service, "profiles", [
         { id: parentUser.id, email: fixtures.accounts.parent.email, role: "parent" },
         { id: studentUser.id, email: fixtures.accounts.student.email, role: "student" },
         { id: representativeUser.id, email: fixtures.accounts.representative.email, role: "university_rep" },
         { id: adminUser.id, email: fixtures.accounts.admin.email, role: "admin" },
+        { id: intruderParentUser.id, email: intruderParentAccount.email, role: "parent" },
+        { id: intruderStudentUser.id, email: intruderStudentAccount.email, role: "student" },
+        { id: intruderRepresentativeUser.id, email: intruderRepresentativeAccount.email, role: "university_rep" },
       ]);
       expectNoDatabaseError(profileInsert.error, "service setup of role profiles");
 
       const parent = await signIn(environment, fixtures.accounts.parent);
       const student = await signIn(environment, fixtures.accounts.student);
       const representative = await signIn(environment, fixtures.accounts.representative);
+      const intruderParent = await signIn(environment, intruderParentAccount);
+      const intruderStudent = await signIn(environment, intruderStudentAccount);
+      const intruderRepresentative = await signIn(environment, intruderRepresentativeAccount);
 
       const anonymousUniversity = await insertRows(supabase, "universities", {
         id: fixtures.ids.anonymousUniversityAttempt,
@@ -196,6 +263,12 @@ describe("Supabase three-portal integration audit", () => {
       expectNoDatabaseError(courseInsert.error, "university representative course insert");
       const galleryInsert = await insertRows(representative, "gallery_images", fixtures.institution.galleryImage);
       expectNoDatabaseError(galleryInsert.error, "university representative gallery insert");
+
+      const foreignUniversityUpdate = await updateById(intruderRepresentative, "universities", fixtures.ids.university, {
+        name: `QA Audit Hijack ${fixtures.runId}`,
+      });
+      expectNoDatabaseError(foreignUniversityUpdate.error, "other representative university update filter");
+      expect(foreignUniversityUpdate.data ?? [], "other representative university update unexpectedly matched").toEqual([]);
 
       const directSession = await insertRows(parent, "sessions", {
         id: fixtures.ids.unauthorizedSessionAttempt,
@@ -219,6 +292,13 @@ describe("Supabase three-portal integration audit", () => {
       const invitationToken = invitation.invitation_token as string;
       createdIds.sessions.push(sessionId);
 
+      const foreignParentSession = await selectIdsByColumn(intruderParent, "sessions", "id", sessionId);
+      expectNoDatabaseError(foreignParentSession.error, "other parent session read filter");
+      expect(foreignParentSession.data ?? [], "other parent can read a family session").toEqual([]);
+
+      const foreignStudentClaim = await rpc(intruderStudent, "claim_student_invitation", { p_invitation_token: invitationToken });
+      expectDatabaseError(foreignStudentClaim.error, "22023", "other student invitation claim");
+
       const directAssessment = await insertRows(student, "student_assessments", {
         ...fixtures.student.assessment,
         session_id: sessionId,
@@ -239,6 +319,18 @@ describe("Supabase three-portal integration audit", () => {
       });
       expectNoDatabaseError(completionResult.error, "student assessment completion RPC");
 
+      const parentAssessment = await selectIdsByColumn(parent, "student_assessments", "session_id", sessionId);
+      expectNoDatabaseError(parentAssessment.error, "parent bound assessment read");
+      expect(parentAssessment.data ?? [], "parent cannot read the bound assessment").toHaveLength(1);
+
+      const studentAssessment = await selectIdsByColumn(student, "student_assessments", "session_id", sessionId);
+      expectNoDatabaseError(studentAssessment.error, "student bound assessment read");
+      expect(studentAssessment.data ?? [], "student cannot read the bound assessment").toHaveLength(1);
+
+      const foreignStudentAssessment = await selectIdsByColumn(intruderStudent, "student_assessments", "session_id", sessionId);
+      expectNoDatabaseError(foreignStudentAssessment.error, "other student assessment read filter");
+      expect(foreignStudentAssessment.data ?? [], "other student can read a bound assessment").toEqual([]);
+
       const reportBeforeGrant = await rpc(parent, "get_authorized_report", { p_session_id: sessionId });
       expectDatabaseError(reportBeforeGrant.error, "42501", "report before demo grant");
 
@@ -251,6 +343,9 @@ describe("Supabase three-portal integration audit", () => {
 
       const reportGrant = await rpc(parent, "grant_demo_report_access", { p_session_id: sessionId });
       expectNoDatabaseError(reportGrant.error, "parent demo report grant RPC");
+
+      const foreignParentGrant = await rpc(intruderParent, "grant_demo_report_access", { p_session_id: sessionId });
+      expectDatabaseError(foreignParentGrant.error, "42501", "other parent demo report grant");
       const report = await rpc(parent, "get_authorized_report", { p_session_id: sessionId });
       expectNoDatabaseError(report.error, "authorized parent report RPC");
       const reportPayload = jsonObject(report.data, "authorized parent report RPC");
@@ -259,6 +354,9 @@ describe("Supabase three-portal integration audit", () => {
 
       const studentReport = await rpc(student, "get_authorized_report", { p_session_id: sessionId });
       expectDatabaseError(studentReport.error, "42501", "student report access");
+
+      const foreignParentReport = await rpc(intruderParent, "get_authorized_report", { p_session_id: sessionId });
+      expectDatabaseError(foreignParentReport.error, "42501", "other parent report access");
 
       const directPayment = await insertRows(parent, "payments", {
         id: fixtures.ids.payment,
