@@ -1,0 +1,64 @@
+@import "tailwindcss";
+@source "../../../packages/ui/src";
+
+@theme {
+  --color-navy: #10263e;
+  --color-coral: #e85d46;
+  --color-coral-light: #ffb5a7;
+  --color-canvas: #f7f6f2;
+  --color-mist: #f0f3f5;
+  --color-frost: #e2e8ec;
+  --font-sans: "Aptos", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Georgia", "Times New Roman", serif;
+}
+
+:root {
+  color: var(--color-slate-900);
+  background: var(--color-canvas);
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { outline-color: var(--color-coral); outline-offset: 3px; }
+button:not(:disabled), a { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.65; }
+::selection { color: white; background: var(--color-coral); }
+
+@utility field-control {
+  width: 100%;
+  border: 1px solid var(--color-slate-300);
+  background: white;
+  padding: 0.75rem 0.875rem;
+  color: var(--color-navy);
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+
+  &::placeholder { color: var(--color-slate-400); }
+  &:focus { border-color: var(--color-navy); box-shadow: 0 0 0 3px rgb(16 38 62 / 0.12); outline: none; background: white; }
+  &[aria-invalid="true"] { border-color: var(--color-rose-500); }
+}
+
+@utility field-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-slate-600); }
+@utility primary-button { display: inline-flex; min-height: 2.875rem; align-items: center; justify-content: center; gap: 0.625rem; background: var(--color-navy); padding-inline: 1.25rem; color: white; font-size: 0.875rem; font-weight: 700; transition: background-color 150ms ease, transform 150ms ease; &:hover:not(:disabled) { background: #183a5e; } &:active:not(:disabled) { transform: translateY(1px); } }
+@utility secondary-button { display: inline-flex; min-height: 2.875rem; align-items: center; justify-content: center; gap: 0.625rem; border: 1px solid var(--color-slate-300); background: white; padding-inline: 1.125rem; color: var(--color-navy); font-size: 0.875rem; font-weight: 700; transition: border-color 150ms ease, background-color 150ms ease; &:hover { border-color: var(--color-navy); background: var(--color-mist); } }
+@utility icon-button { display: inline-grid; height: 2.5rem; width: 2.5rem; place-items: center; border: 1px solid var(--color-frost); color: var(--color-slate-600); transition: border-color 150ms ease, background-color 150ms ease; &:hover { border-color: var(--color-slate-400); background: var(--color-mist); } }
+@utility eyebrow { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-coral); }
+@utility page-title { margin-top: 0.75rem; font-family: var(--font-display); font-size: clamp(2.25rem, 5vw, 3.5rem); line-height: 1.06; color: var(--color-navy); }
+@utility page-intro { margin-top: 1rem; max-width: 44rem; font-size: 1rem; line-height: 1.75; color: var(--color-slate-600); }
+@utility section-card { border: 1px solid var(--color-frost); background: white; padding: 1.5rem; }
+@utility section-heading { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; & h3 { font-size: 1.125rem; font-weight: 800; color: var(--color-navy); } & p { margin-top: 0.25rem; font-size: 0.875rem; line-height: 1.5; color: var(--color-slate-500); } }
+@utility section-number { display: grid; height: 2rem; min-width: 2rem; place-items: center; background: var(--color-coral); color: white; font-size: 0.7rem; font-weight: 800; }
+@utility review-card { overflow: hidden; border: 1px solid var(--color-frost); background: white; }
+@utility review-card-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--color-frost); padding: 1rem 1.5rem; & h3 { font-weight: 800; color: var(--color-navy); } }
+@utility review-icon { display: grid; height: 2.25rem; width: 2.25rem; place-items: center; background: var(--color-mist); color: var(--color-navy); }
+@utility edit-link { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; font-weight: 800; color: var(--color-slate-500); &:hover { color: var(--color-coral); } }
+@utility metric-card { border: 1px solid var(--color-frost); background: white; padding: 1.25rem; & dt { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-slate-500); } & dd { margin-top: 1rem; font-family: var(--font-display); font-size: 2.25rem; color: var(--color-navy); } }
+
+.review-card dt { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-slate-400); }
+.review-card dd { margin-top: 0.35rem; font-size: 0.875rem; line-height: 1.5; }
+
+@media (min-width: 640px) { .section-card { padding: 2rem; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }

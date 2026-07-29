@@ -1,0 +1,71 @@
+@import "tailwindcss";
+@source "../../../packages/ui/src";
+
+@theme {
+  --color-midnight-harbor: #103b3f;
+  --color-deep-current: #18565b;
+  --color-tidal-teal: #168b84;
+  --color-mint-signal: #c9f36b;
+  --color-coral-note: #ff7a66;
+  --color-sun-paper: #f7cb67;
+  --color-sea-fog: #d8e6e4;
+  --color-ice-tint: #edf7f5;
+  --color-warm-shell: #fffdf7;
+  --color-ink: #153336;
+  --font-sans: "Aptos", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Arial Black", "Aptos Display", "Segoe UI", sans-serif;
+}
+
+:root {
+  color: var(--color-ink);
+  background: var(--color-warm-shell);
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { outline-color: var(--color-tidal-teal); outline-offset: 3px; }
+::selection { color: white; background: var(--color-deep-current); }
+
+.dot-field {
+  background-image: radial-gradient(rgb(255 255 255 / 0.14) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.hide-scrollbar { scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+.metric-progress {
+  display: block;
+  width: 100%;
+  height: 0.5rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-sea-fog);
+}
+.metric-progress::-webkit-progress-bar { background: var(--color-sea-fog); }
+.metric-progress::-webkit-progress-value { background: var(--metric-color); }
+.metric-progress::-moz-progress-bar { background: var(--metric-color); }
+.metric-teal { --metric-color: var(--color-tidal-teal); }
+.metric-mint { --metric-color: var(--color-mint-signal); }
+.metric-coral { --metric-color: var(--color-coral-note); }
+
+@keyframes scale-up {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-scaleUp { animation: scale-up 180ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

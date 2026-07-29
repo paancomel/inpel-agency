@@ -1,14 +1,16 @@
 import { ArrowLeft, ArrowRight, Inbox, ShieldCheck } from "lucide-react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 
 import { isValidSessionId, readSession } from "../lib/storage";
 
 export function EmailNotification() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const invitationToken = searchParams.get("token");
   if (!isValidSessionId(id)) return <Navigate to="/" replace />;
 
   const session = readSession(id);
-  if (!session) return <Navigate to="/" replace />;
+  if (!session || !invitationToken) return <Navigate to="/" replace />;
 
   return (
     <section className="min-h-[75vh] bg-mist px-4 py-10 sm:px-6 sm:py-16">
@@ -32,7 +34,7 @@ export function EmailNotification() {
             <p>Your family has started a private INPEL match and invited you to complete a short strengths and interests assessment.</p>
             <p>There are no right answers. Choose what feels most like you, and we’ll turn it into a university shortlist with cost and career context.</p>
           </div>
-          <Link to={`/student/${id}`} className="mt-8 inline-flex items-center gap-3 bg-forest px-6 py-4 font-bold text-white transition hover:bg-leaf">
+          <Link to={`/student/${id}?token=${encodeURIComponent(invitationToken)}`} className="mt-8 inline-flex items-center gap-3 bg-forest px-6 py-4 font-bold text-white transition hover:bg-leaf">
             Start Student Assessment <ArrowRight className="size-5" aria-hidden="true" />
           </Link>
           <div className="mt-8 flex gap-3 border-l-4 border-leaf bg-mint/60 p-4 text-sm leading-6 text-forest">

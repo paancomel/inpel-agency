@@ -23,8 +23,9 @@ describe("recommendation calculations", () => {
         living_costs: null,
         acceptance_rate: null,
         facilities_flags: null,
-        contacts: null,
-        created_at: null,
+      contacts: null,
+      created_at: null,
+      representative_id: null,
       },
     ]);
 

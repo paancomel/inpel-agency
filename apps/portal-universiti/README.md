@@ -8,12 +8,14 @@ React single-page application for the parent-guided university matching journey 
 | --- | --- |
 | `/` | Parent priorities form and student invitation creation |
 | `/email-notification/:id` | Invitation email preview |
-| `/student/:id` | Resumable account, hobbies, psychometric, and academic assessment |
+| `/student/:id` | Resumable personality, psychometric, dynamic SPM, Vibe Check, and authentication journey |
+| `/auth/callback?sessionId=:id` | OAuth/email-confirmation callback that restores and commits the cached assessment |
+| `/parent/:id` | Assessment-complete parent notification handoff |
 | `/checkout/:id` | No-charge report tier simulation |
 | `/results/:id` | University matches, comparison, ROI, career outlook, and PDF report |
 | `/guide/:guideId` | Scholarship instructions and document checklist |
 
-Unknown routes, malformed UUIDs, and unknown sessions return to the parent portal. Checkout and results routes also enforce completion and payment prerequisites.
+Unknown routes, malformed UUIDs, and unknown sessions return to the parent portal. Checkout and results require both a completed assessment and an authenticated student session; results additionally require a successful checkout.
 
 ## Local development
 
@@ -32,18 +34,21 @@ The Vite configuration deliberately maps the established `NEXT_PUBLIC_SUPABASE_*
 
 All client access and schema types come from `@repo/database`. `src/lib/portal-data.ts` dynamically loads its exported singleton at the moment data is read or written; the app never calls `createClient` and never creates its own Supabase client.
 
-Writes target:
+Writes and authentication target:
 
-- `sessions` for parent preferences and lifecycle status;
-- `student_assessments` for submitted student data;
+- `sessions` for parent email, preferred location, monthly household income, four structured preferences, and lifecycle status;
+- `student_assessments` for dynamic SPM rows, the 16 Likert values, six structured Vibe Check answers, and the compatibility aggregate;
 - `payments` for the no-charge checkout result.
+- Supabase Auth for email/password sign-up or login plus Google and Facebook OAuth when the shared client and providers are configured.
 
 University catalogue reads target `universities`. A local fallback keeps the prototype usable when public environment values or a reachable project are absent.
 
 ## Privacy and resilience
 
-- Student passwords are validated in memory and immediately discarded.
+- Student passwords are passed directly to the shared Supabase Auth client when configured, then immediately discarded.
 - No authentication token or card number is stored in `localStorage`.
+- Before email signup/login or an OAuth redirect, the complete validated wizard state is cached under a dedicated `localStorage` key with a 24-hour expiry so email confirmation can safely reopen in another tab. Passwords and provider tokens are excluded.
+- Callback completion is ordered: restore draft, upsert the student/profile records, mark the session complete, persist the local session, clear the draft, then enter the parent view. A failed cloud write keeps the draft for an idempotent retry.
 - Persisted session records are schema-validated on every read; corrupted data returns a safe redirect.
 - Parent email and student assessment data remain scoped to the generated session.
 - PDF capture has a 12-second timeout and restores hidden report sections after success or failure.
@@ -58,4 +63,6 @@ pnpm --filter @repo/portal-universiti lint
 pnpm --filter @repo/portal-universiti build
 ```
 
-The test suite covers blueprint validation messages, corrupted storage, password non-persistence, route fallback, parent invitation creation, student step gating, checkout navigation, sparse catalogue normalization, and ROI calculations.
+The test suite covers the full Malaysian location/income form, all four parental preferences, exact database payload serialization, the 16-question personality test, dynamic SPM subjects, the six-card Vibe Check, password non-persistence, versioned redirect drafts, successful and failed callback hydration, authentication route guards, parent notification handoff, checkout navigation, corrupted storage, sparse catalogue normalization, and ROI calculations.
+
+For hosted OAuth, enable Google and Facebook in Supabase Auth and allow the deployed portal's `/auth/callback` URL. Email confirmation uses the same callback URL. Never place provider secrets in Vite environment files.
