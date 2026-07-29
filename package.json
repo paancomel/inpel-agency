@@ -10,7 +10,7 @@
     "typecheck": "turbo run typecheck"
   },
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=22.13.0",
     "pnpm": ">=10.0.0"
   },
   "devDependencies": {
