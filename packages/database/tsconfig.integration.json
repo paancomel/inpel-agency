@@ -5,7 +5,8 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "paths": {
-      "@repo/database": ["./index.ts"]
+      "@repo/database": ["./index.ts"],
+      "zod": ["./node_modules/zod"]
     },
     "types": ["node", "vitest/globals"]
   },
