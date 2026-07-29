@@ -6,7 +6,9 @@
   "scripts": {
     "build": "turbo run build",
     "clean": "turbo run clean",
+    "lint": "turbo run lint",
     "test": "turbo run test",
+    "test:integration": "pnpm --filter @repo/database test:integration",
     "typecheck": "turbo run typecheck"
   },
   "engines": {

@@ -1,10 +1,15 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@repo/database": ["./index.ts"]
+    },
     "types": ["node", "vitest/globals"]
   },
-  "include": ["./**/*.ts"],
-  "exclude": [
+  "include": [
     "./audit-flow.contract.test.ts",
     "./audit-flow.fixtures.ts",
     "./audit-flow.test.ts",

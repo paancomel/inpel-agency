@@ -10,9 +10,12 @@
   },
   "exclude": [
     "./**/*.test.ts",
+    "./audit-flow.fixtures.ts",
     "./dist",
     "./node_modules",
-    "./vitest.config.ts",
+    "./vitest.integration.config.ts",
+    "./vitest.integration.setup.ts",
+    "./vitest.config.mjs",
     "./vitest.setup.ts"
   ]
 }

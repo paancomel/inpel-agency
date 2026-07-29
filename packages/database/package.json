@@ -28,6 +28,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
+    "test:integration": "tsc -p tsconfig.integration.json --pretty false && vitest run --config vitest.integration.config.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
