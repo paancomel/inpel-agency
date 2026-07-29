@@ -8,12 +8,16 @@
     "clean": {
       "cache": false
     },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "outputs": []
+    },
     "test": {
       "dependsOn": ["^build"],
       "outputs": []
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^build"],
       "outputs": []
     }
   }
