@@ -60,7 +60,7 @@ select results_eq(
       ('courses'::text COLLATE "C", 6::bigint),
       ('gallery_images'::text COLLATE "C", 4::bigint),
       ('payments'::text COLLATE "C", 4::bigint),
-      ('profiles'::text COLLATE "C", 6::bigint),
+      ('profiles'::text COLLATE "C", 5::bigint),
       ('recommendation_results'::text COLLATE "C", 5::bigint),
       ('review_likes'::text COLLATE "C", 3::bigint),
       ('reviews'::text COLLATE "C", 8::bigint),
