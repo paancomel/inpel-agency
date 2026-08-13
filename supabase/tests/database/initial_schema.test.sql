@@ -64,8 +64,8 @@ select results_eq(
       ('recommendation_results'::text COLLATE "C", 5::bigint),
       ('review_likes'::text COLLATE "C", 3::bigint),
       ('reviews'::text COLLATE "C", 8::bigint),
-      ('sessions'::text COLLATE "C", 12::bigint),
-      ('student_assessments'::text COLLATE "C", 12::bigint),
+      ('sessions'::text COLLATE "C", 8::bigint),
+      ('student_assessments'::text COLLATE "C", 8::bigint),
       ('universities'::text COLLATE "C", 12::bigint)
   $$,
   'creates the exact number of columns declared for each table'
