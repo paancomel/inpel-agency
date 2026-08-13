@@ -51,3 +51,24 @@ jobs:
 
       # Deliberately excluded: remote Supabase integration, migrations,
       # browser journeys, deployments, and all secrets/production access.
+
+  database-pgtap:
+    name: Local Supabase pgTAP contracts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Start disposable local Supabase
+        run: npx supabase start
+
+      - name: Rebuild local database from migrations
+        run: npx supabase db reset
+
+      - name: Run pgTAP database contracts
+        run: npx supabase test db
+
+      - name: Stop local Supabase
+        if: always()
+        run: npx supabase stop
