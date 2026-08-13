@@ -1,13 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Clipboard, Mail, ShieldX, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useForm, type UseFormRegister } from "react-hook-form";
 import { Link } from "react-router-dom";
 
 import { ParentAuthGate } from "../components/ParentAuthGate";
 import { HOUSEHOLD_INCOME_OPTIONS, MALAYSIA_LOCATIONS, PARENT_PREFERENCE_OPTIONS } from "../lib/assessment-data";
-import { authenticateParentAccount, revokeParentStudentInvitation, syncParentSession, type StudentAuthMode } from "../lib/portal-data";
+import { authenticateParentAccount, getAuthenticatedStudent, revokeParentStudentInvitation, syncParentSession, type StudentAuthMode } from "../lib/portal-data";
 import { createSessionRecord, saveSession, type SessionRecord } from "../lib/storage";
 import { parentProfileSchema, type ParentProfile } from "../lib/validation";
 
@@ -33,11 +33,25 @@ export function ParentPortal() {
     defaultValues: { email: "", studentEmail: "", preferences: {} },
   });
 
+  useEffect(() => {
+    let isActive = true;
+    void getAuthenticatedStudent().then(
+      (account) => {
+        if (!isActive) return;
+        setParentEmail(account.email);
+        setValue("email", account.email, { shouldValidate: true });
+      },
+      () => undefined,
+    );
+    return () => { isActive = false; };
+  }, [setValue]);
+
   async function authenticateParent(email: string, password: string, mode: StudentAuthMode) {
     setIsAuthenticating(true);
     setAuthError("");
     try {
-      const account = await authenticateParentAccount(email, password, mode);
+      const emailRedirectTo = mode === "signup" ? `${window.location.origin}/auth/callback` : undefined;
+      const account = await authenticateParentAccount(email, password, mode, emailRedirectTo);
       if (account.confirmationRequired || account.source !== "cloud" || !account.userId) {
         throw new Error("Confirm your parent email, then return here to finish creating the invitation.");
       }

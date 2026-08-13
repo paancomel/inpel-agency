@@ -1,8 +1,9 @@
 import { LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { completeCachedAuthentication } from "../lib/auth-flow";
+import { getAuthenticatedStudent } from "../lib/portal-data";
 import { isValidSessionId } from "../lib/storage";
 
 export function AuthCallback() {
@@ -27,7 +28,17 @@ export function AuthCallback() {
   }
 
   useEffect(() => {
-    if (!isValidSessionId(sessionId)) return;
+    if (!isValidSessionId(sessionId)) {
+      let isActive = true;
+      void getAuthenticatedStudent()
+        .then(() => { if (isActive) navigate("/", { replace: true }); })
+        .catch((authenticationError: unknown) => {
+          if (!isActive) return;
+          setError(authenticationError instanceof Error ? authenticationError.message : "We could not confirm this email link.");
+          setIsCompleting(false);
+        });
+      return () => { isActive = false; };
+    }
     let isActive = true;
     void completeCachedAuthentication(sessionId, invitationToken)
       .then(() => { if (isActive) navigate(`/parent/${sessionId}`, { replace: true }); })
@@ -39,7 +50,20 @@ export function AuthCallback() {
     return () => { isActive = false; };
   }, [invitationToken, navigate, sessionId]);
 
-  if (!isValidSessionId(sessionId)) return <Navigate to="/" replace />;
+  if (!isValidSessionId(sessionId)) {
+    return (
+      <section className="grid min-h-[70vh] place-items-center bg-cream px-4 py-14">
+        <div className="w-full max-w-xl border border-slate-200 bg-white p-8 text-center shadow-[0_20px_60px_rgba(15,35,29,0.08)] sm:p-12">
+          <span className="mx-auto grid size-14 place-items-center bg-mint text-leaf">
+            {isCompleting ? <LoaderCircle className="size-6 animate-spin" /> : <ShieldCheck className="size-6" />}
+          </span>
+          <p className="mt-5 text-xs font-bold tracking-[0.16em] text-leaf uppercase">Email confirmation</p>
+          <h1 className="mt-2 font-display text-4xl font-bold text-forest">{isCompleting ? "Confirming your account…" : "We could not confirm this email link."}</h1>
+          {isCompleting ? <p className="mt-4 leading-7 text-slate-600" role="status">Returning you securely to INPEL.</p> : <p className="mt-4 border-l-4 border-red-600 bg-red-50 p-4 text-left font-semibold text-red-800" role="alert">{error}</p>}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="grid min-h-[70vh] place-items-center bg-cream px-4 py-14">

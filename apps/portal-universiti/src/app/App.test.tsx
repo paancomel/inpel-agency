@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App, PortalRoutes } from "./App";
 
 vi.mock("../lib/portal-data", () => ({
+  getAuthenticatedStudent: vi.fn().mockRejectedValue(new Error("No active session")),
   authenticateParentAccount: vi.fn().mockResolvedValue({
     source: "cloud",
     userId: "11111111-1111-4111-8111-111111111111",

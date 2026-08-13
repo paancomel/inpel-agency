@@ -79,8 +79,9 @@ export async function authenticateParentAccount(
   email: string,
   password: string,
   mode: StudentAuthMode,
+  emailRedirectTo?: string,
 ): Promise<AuthenticatedStudent> {
-  return authenticateStudentAccount(email, password, mode);
+  return authenticateStudentAccount(email, password, mode, emailRedirectTo);
 }
 
 export async function getAuthenticatedStudent(): Promise<AuthenticatedStudent> {
