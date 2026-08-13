@@ -1,5 +1,8 @@
 node_modules/
 .turbo/
+.pnpm-store/
+.playwright-cli/
+output/
 dist/
 coverage/
 .env
