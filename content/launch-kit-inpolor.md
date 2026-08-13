@@ -1,116 +1,116 @@
 # INPOLOR Launch Kit
 
-Public-facing storytelling kit for INPOLOR (university review platform).
-Structure: Donald Miller (StoryBrand) — hero is the parent/student, the brand is the guide.
-Style: Alex Hormozi — bold hooks, open loops, specific, value-first, clear CTA.
-Voice: Farhan's natural Malay-English. No corporate polish.
+Kit cerita untuk INPOLOR (platform review universiti) — untuk public.
+Struktur: Donald Miller (StoryBrand) — hero ialah parent/student, jenama ialah guide.
+Gaya: Alex Hormozi — hook berani, open loop, spesifik, value-first, CTA jelas.
+Suara: Bahasa Melayu Farhan. Kasual, direct, peer. Takde polish korporat.
 
-## The arc (every post follows this)
+## Arc (setiap post ikut ni)
 
-1. **Hook** — stop the scroll. Bold, specific, slightly uncomfortable.
-2. **Problem** — the real pain. External (can't find truth) + internal (fear of wasting years).
-3. **Discovery** — something counterintuitive we found.
-4. **What I'm doing about it** — the product as evidence, not as feature list.
-5. **Invitation** — one clear CTA. Follow / comment / save / share.
-
----
-
-## Post 1 — The Gate (Unspoken Truths)
-
-**Hook:** The honest reviews are locked. And you have to give to get them.
-
-**Problem:** Every university review site is a brochure wearing a disguise. Polished words. Zero risk. Nothing you can't already read in the prospectus.
-
-**Discovery:** The reviews people actually trust are the ones nobody wants to post.
-
-**What I'm doing:** So we locked the candid layer behind a 20-second pulse check. No email. No account. Three fields. Give a little — get the real story.
-
-**Invitation:** Choosing a university in the next 2 years? Follow. I'm building the review platform that tells the truth — whether the university likes it or not.
+1. **Hook** — hentikan scroll. Berani, spesifik, sikit tak selesa.
+2. **Masalah** — sakit sebenar. Luaran (takde maklumat betul) + dalaman (takut buang tahun).
+3. **Penemuan** — sesuatu yang counterintuitive.
+4. **Apa aku buat** — produk sebagai bukti, bukan senarai ciri.
+5. **Jemputan** — satu CTA jelas. Follow / comment / save / share.
 
 ---
 
-## Post 2 — Anonymous-first
+## Post 1 — Gerbang (Unspoken Truths)
 
-**Hook:** Nobody says the hard truth about their university under their own name. So we don't make them.
+**Hook:** Review yang jujur tu dikunci. Nak baca, kau kena bagi dulu.
 
-**Problem:** Students know the real story — the lecturer who never shows up, the course that's outdated, the fees that hide costs. But they won't post it with their face on it. That's not cowardice. That's survival.
+**Masalah:** Semua laman review universiti kat internet ni brosur bertopeng. Ayat sopan, zero risiko. Semua benda yang kau dah boleh baca dalam prospectus.
 
-**Discovery:** The best information on any campus is spoken quietly, between friends. Never on the record.
+**Penemuan:** Review yang orang betul-betul percaya ialah yang takde siapa nak tulis.
 
-**What I'm doing:** INPOLOR lets you review anonymously by default. No name. No account needed. Your identity is scrubbed before it touches a server. Truth doesn't need a byline.
+**Apa aku buat:** Sebab tu kami kunci lapisan jujur tu di sebalik pulse check 20 saat. Takde email. Takde akaun. Tiga field je. Kau bagi sikit — kau dapat cerita sebenar.
 
-**Invitation:** Tag a friend who's choosing a university. They'll need this one day.
-
----
-
-## Post 3 — Moderation (trust over speed)
-
-**Hook:** Every review you'll read here was held back before it went live.
-
-**Problem:** One fake review kills trust faster than ten honest ones build it. Universities know this — review sites get flooded the moment they start mattering.
-
-**Discovery:** Speed is the enemy of a trustworthy review platform. Fast publishing = easy to game.
-
-**What I'm doing:** Every review sits in a pending queue. Validated, checked, then published. We lose speed on purpose. Trust is the product.
-
-**Invitation:** This is what building for trust looks like. Follow to watch us not cut corners.
+**Jemputan:** Kalau kau nak masuk universiti dalam 2 tahun ni, follow. Aku tengah bina platform review yang cakap benda betul — suka ke tak pihak universiti.
 
 ---
 
-## Post 4 — Red flags wajib
+## Post 2 — Tanpa Nama Dulu
 
-**Hook:** We force every reviewer to say something negative. Deal with it.
+**Hook:** Takde siapa cakap benda pedas pasal universiti dia guna nama sendiri. Sebab tu kami tak paksa.
 
-**Problem:** Review platforms are positivity machines. Happy people review, angry people rant — the useful middle never gets written.
+**Masalah:** Pelajar tahu cerita sebenar — pensyarah yang tak pernah masuk kelas, kursus yang dah outdated, yuran yang sembunyi kos. Tapi diorang takkan post guna muka sendiri. Bukan penakut. Itu survival.
 
-**Discovery:** A review with only praise is marketing, not information. The red flags are where the signal lives.
+**Penemuan:** Maklumat paling baik kat mana-mana kampus pun cakap senyap-senyap, antara kawan. Tak pernah atas rekod.
 
-**What I'm doing:** Every INPOLOR review has green flags AND red flags. You can't submit without both. If your university has nothing bad to say, you haven't been there long enough.
+**Apa aku buat:** INPOLOR bagi kau review tanpa nama, default. Takde nama, takde akaun pun takpe. Identiti kau dibuang sebelum sampai server. Kebenaran tak perlukan tandatangan.
 
-**Invitation:** Save this. You'll want the red flags before you pick a course.
+**Jemputan:** Tag kawan kau yang tengah pilih universiti. Diorang akan perlukan ni.
+
+---
+
+## Post 3 — Moderasi (amanah lebih penting dari laju)
+
+**Hook:** Setiap review yang kau baca kat sini ditahan dulu sebelum naik.
+
+**Masalah:** Satu review palsu boleh bunuh kepercayaan lagi laju daripada sepuluh review jujur bina. Universiti pun tahu — sebab tu laman review selalu kena serbu bila dah mula penting.
+
+**Penemuan:** Kelajuan ialah musuh platform review yang boleh dipercayai. Publish laju = senang kena game.
+
+**Apa aku buat:** Setiap review duduk dalam queue pending. Disahkan, disemak, baru publish. Kami buang kelajuan dengan sengaja. Amanah tu produk.
+
+**Jemputan:** Inilah rupa bina untuk amanah. Follow nak tengok kami tak potong jalan.
+
+---
+
+## Post 4 — Red Flags Wajib
+
+**Hook:** Kami paksa setiap reviewer cakap benda negatif. Layannya.
+
+**Masalah:** Platform review ni mesin positif. Orang gembira review, orang marah meluah — bahagian tengah yang berguna tu takde siapa tulis.
+
+**Penemuan:** Review yang puji je bukan maklumat, itu marketing. Red flag tempat signal berada.
+
+**Apa aku buat:** Setiap review INPOLOR ada green flags DAN red flags. Tak boleh hantar kalau takde dua-dua. Universiti kau takde langsung benda buruk? Kau belum cukup lama kat situ.
+
+**Jemputan:** Save ni. Kau akan perlukan red flags sebelum pilih kursus.
 
 ---
 
 ## Post 5 — Spill the Tea
 
-**Hook:** We don't ask for a score. We ask what it's actually like.
+**Hook:** Kami tak tanya skor. Kami tanya macam mana sebenarnya.
 
-**Problem:** A rating out of 5 tells you nothing. 4.2 at University A and 4.2 at University B can be two completely different experiences.
+**Masalah:** Rating 5 bintang tak cerita apa-apa. 4.2 kat Universiti A dengan 4.2 kat Universiti B boleh jadi dua pengalaman yang langsung berbeza.
 
-**Discovery:** The real information lives in the stories nobody tells the brochure writers.
+**Penemuan:** Maklumat sebenar duduk dalam cerita yang takde siapa bagitahu penulis brosur.
 
-**What I'm doing:** Every review ends with one question: spill the tea. Plus vibe tags — career-ready, fast-paced, portfolio-first — so you can feel a campus before you set foot on it.
+**Apa aku buat:** Setiap review berakhir dengan satu soalan: spill the tea. Plus vibe tags — career-ready, fast-paced, portfolio-first — supaya kau boleh rasa kampus tu sebelum jejak kaki.
 
-**Invitation:** What's one thing about your university that isn't in the prospectus? Drop it below. Anonymously, of course.
-
----
-
-## Post 6 — Privacy as architecture
-
-**Hook:** We built a review platform where we can't tell who said what. Even if we wanted to.
-
-**Problem:** Saying the truth about an institution is risky. Your name, your future, your lecturer's mood — all at stake.
-
-**Discovery:** Most "private" platforms just mean "we won't look until we need to." That's not privacy. That's a promise.
-
-**What I'm doing:** We don't store your IP — only a scrambled digest. Anonymous reviews carry zero identity. Even the rate limiter can't identify you. Privacy is the architecture, not the policy.
-
-**Invitation:** This is the standard review platforms should be held to. Share this if you agree.
+**Jemputan:** Apa satu benda pasal universiti kau yang takde dalam prospectus? Tulis kat bawah. Tanpa nama, mestilah.
 
 ---
 
-## Launch sequence (one post per day)
+## Post 6 — Privasi Sebagai Seni Bina
 
-- **Day 1 — Post 1 (The Gate).** Biggest curiosity hook. End with "follow."
-- **Day 2 — Post 4 (Red flags).** The contrarian one. Strong engagement driver.
-- **Day 3 — Post 2 (Anonymous-first).** The emotional one. Parents share this.
-- **Day 4 — Post 5 (Spill the Tea).** Interactive CTA — collect real answers in comments.
-- **Day 5 — Post 3 (Moderation).** Trust builder before reveal.
-- **Day 6 — Post 6 (Privacy).** The closer. Establishes the standard you're holding yourself to.
-- **Day 7 — Reveal post.** Product name + what it does + link. The six posts were the runway.
+**Hook:** Kami bina platform review yang kami sendiri tak boleh tahu siapa cakap apa. Walaupun kami nak.
 
-## Notes
+**Masalah:** Cakap benda betul pasal institusi tu berisiko. Nama kau, masa depan kau, semua jadi taruhan.
 
-- One post per day, no more. Per mission: never force a lesson, never manufacture.
-- Comments on Post 5 are research gold — real anonymous pain points. Feed them into `feedback/audience-feedback.md`.
-- If a post feels weak on the day, skip it. Don't post for the sake of posting.
+**Penemuan:** Kebanyakan platform "private" maksudnya "kami takkan tengok sampai perlu." Itu bukan privasi. Itu janji.
+
+**Apa aku buat:** Kami tak simpan IP kau — hanya digest yang bercelaru. Review tanpa nama bawa zero identiti. Privacy tu seni bina, bukan polisi.
+
+**Jemputan:** Inilah standard yang patut dipegang oleh semua platform review. Share kalau kau setuju.
+
+---
+
+## Urutan Launch (satu post sehari)
+
+- **Hari 1 — Post 1 (Gerbang).** Hook paling besar. Akhiri dengan "follow."
+- **Hari 2 — Post 4 (Red flags).** Yang contrarian. Engagement kuat.
+- **Hari 3 — Post 2 (Tanpa Nama).** Yang emosi. Parent suka share.
+- **Hari 4 — Post 5 (Spill the Tea).** CTA interaktif — kumpul jawapan sebenar dalam comment.
+- **Hari 5 — Post 3 (Moderasi).** Bina amanah sebelum reveal.
+- **Hari 6 — Post 6 (Privasi).** Penutup. Standard yang kau pegang sendiri.
+- **Hari 7 — Post reveal.** Nama produk + apa dia buat + link. Enam post tu runway.
+
+## Nota
+
+- Satu post sehari, tak lebih. Per mission: jangan paksa lesson, jangan reka cerita.
+- Comment kat Post 5 tu emas — pain point sebenar, tanpa nama. Semua tu masuk `feedback/audience-feedback.md`.
+- Kalau sesuatu post rasa lemah hari tu, skip. Jangan post untuk post.
