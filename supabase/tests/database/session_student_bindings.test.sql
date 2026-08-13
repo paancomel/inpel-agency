@@ -146,7 +146,7 @@ select case
     format($sql$
       insert into public.session_student_bindings (
         session_id, student_id, token_digest, invited_email_digest,
-        status, claimed_at, claimed_by, created_at, expires_at
+        status, claimed_at, claimed_by, created_at, expires_at, updated_at
       ) values (
         (select id from binding_test_sessions where slot = 5),
         %L,
@@ -156,7 +156,8 @@ select case
         timestamp with time zone '2030-01-01 00:00:00+00',
         %L,
         timestamp with time zone '2029-12-31 00:00:00+00',
-        timestamp with time zone '2030-01-01 00:00:00+00'
+        timestamp with time zone '2030-01-01 00:00:00+00',
+        timestamp with time zone '2029-12-31 00:00:00+00'
       )
     $sql$, (select id from binding_test_students), (select id from binding_test_students)),
     'accepts a valid claimed row'
@@ -167,14 +168,15 @@ select lives_ok(
   $$
     insert into public.session_student_bindings (
       session_id, token_digest, invited_email_digest, status,
-      created_at, expires_at
+      created_at, expires_at, updated_at
     ) values (
       (select id from binding_test_sessions where slot = 6),
       decode(repeat('bb', 32), 'hex'),
       decode(repeat('cc', 32), 'hex'),
       'expired',
       timestamp with time zone '2029-12-31 00:00:00+00',
-      timestamp with time zone '2030-01-01 00:00:00+00'
+      timestamp with time zone '2030-01-01 00:00:00+00',
+      timestamp with time zone '2029-12-31 00:00:00+00'
     )
   $$,
   'accepts a valid expired row'
@@ -185,7 +187,7 @@ select case
     format($sql$
       insert into public.session_student_bindings (
         session_id, token_digest, invited_email_digest, status,
-        revoked_at, revoked_by, created_at, expires_at
+        revoked_at, revoked_by, created_at, expires_at, updated_at
       ) values (
         (select id from binding_test_sessions where slot = 7),
         decode(repeat('dd', 32), 'hex'),
@@ -194,7 +196,8 @@ select case
         timestamp with time zone '2030-01-01 00:00:00+00',
         %L,
         timestamp with time zone '2029-12-31 00:00:00+00',
-        timestamp with time zone '2030-01-01 00:00:00+00'
+        timestamp with time zone '2030-01-01 00:00:00+00',
+        timestamp with time zone '2029-12-31 00:00:00+00'
       )
     $sql$, (select id from public.profiles limit 1)),
     'accepts a valid revoked row'
@@ -258,21 +261,23 @@ select case
     format($sql$
       insert into public.session_student_bindings (
         session_id, student_id, token_digest, invited_email_digest,
-        status, claimed_at, claimed_by, created_at, expires_at
+        status, claimed_at, claimed_by, created_at, expires_at, updated_at
       ) values
         (
           (select id from binding_test_sessions where slot = 9), %L,
           decode(repeat('24', 32), 'hex'), decode(repeat('25', 32), 'hex'),
           'claimed', timestamp with time zone '2030-01-01 00:00:00+00', %L,
           timestamp with time zone '2029-12-31 00:00:00+00',
-          timestamp with time zone '2030-01-01 00:00:00+00'
+          timestamp with time zone '2030-01-01 00:00:00+00',
+          timestamp with time zone '2029-12-31 00:00:00+00'
         ),
         (
           (select id from binding_test_sessions where slot = 10), %L,
           decode(repeat('26', 32), 'hex'), decode(repeat('27', 32), 'hex'),
           'claimed', timestamp with time zone '2030-01-01 00:00:00+00', %L,
           timestamp with time zone '2029-12-31 00:00:00+00',
-          timestamp with time zone '2030-01-01 00:00:00+00'
+          timestamp with time zone '2030-01-01 00:00:00+00',
+          timestamp with time zone '2029-12-31 00:00:00+00'
         )
     $sql$,
       (select id from binding_test_students), (select id from binding_test_students),

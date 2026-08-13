@@ -56,17 +56,17 @@ select results_eq(
   $$,
   $$
     values
-      ('comments'::text COLLATE "C", 4::bigint),
+      ('comments'::text COLLATE "C", 6::bigint),
       ('courses'::text COLLATE "C", 6::bigint),
       ('gallery_images'::text COLLATE "C", 4::bigint),
       ('payments'::text COLLATE "C", 4::bigint),
       ('profiles'::text COLLATE "C", 6::bigint),
       ('recommendation_results'::text COLLATE "C", 5::bigint),
       ('review_likes'::text COLLATE "C", 3::bigint),
-      ('reviews'::text COLLATE "C", 6::bigint),
-      ('sessions'::text COLLATE "C", 8::bigint),
-      ('student_assessments'::text COLLATE "C", 8::bigint),
-      ('universities'::text COLLATE "C", 11::bigint)
+      ('reviews'::text COLLATE "C", 8::bigint),
+      ('sessions'::text COLLATE "C", 12::bigint),
+      ('student_assessments'::text COLLATE "C", 12::bigint),
+      ('universities'::text COLLATE "C", 12::bigint)
   $$,
   'creates the exact number of columns declared for each table'
 );
@@ -129,6 +129,11 @@ select results_eq(
      and rc.constraint_name = tc.constraint_name
     where tc.constraint_schema = 'public'
       and tc.constraint_type = 'FOREIGN KEY'
+      and tc.table_name in (
+        'profiles', 'universities', 'gallery_images', 'courses', 'sessions',
+        'student_assessments', 'recommendation_results', 'payments', 'reviews',
+        'comments', 'review_likes'
+      )
     order by tc.constraint_name
   $$,
   $$
@@ -147,9 +152,10 @@ select results_eq(
       ('reviews_user_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
       ('sessions_parent_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
       ('student_assessments_session_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
-      ('student_assessments_student_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C")
+      ('student_assessments_student_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('universities_representative_id_fkey'::text COLLATE "C", 'SET NULL'::text COLLATE "C")
   $$,
-  'creates all foreign keys and only the specified cascading deletes'
+  'preserves foreign keys for the original public tables'
 );
 
 select results_eq(
@@ -168,14 +174,14 @@ select results_eq(
   $$,
   $$
     values
-      ('comments'::text COLLATE "C", 2::bigint),
+      ('comments'::text COLLATE "C", 4::bigint),
       ('courses'::text COLLATE "C", 2::bigint),
       ('gallery_images'::text COLLATE "C", 2::bigint),
       ('payments'::text COLLATE "C", 3::bigint),
       ('profiles'::text COLLATE "C", 3::bigint),
       ('recommendation_results'::text COLLATE "C", 2::bigint),
       ('review_likes'::text COLLATE "C", 1::bigint),
-      ('reviews'::text COLLATE "C", 1::bigint),
+      ('reviews'::text COLLATE "C", 3::bigint),
       ('sessions'::text COLLATE "C", 2::bigint),
       ('student_assessments'::text COLLATE "C", 1::bigint),
       ('universities'::text COLLATE "C", 2::bigint)
@@ -199,6 +205,8 @@ select results_eq(
   $$
     values
       ('comments.id'::text COLLATE "C"),
+      ('comments.created_at'::text COLLATE "C"),
+      ('comments.status'::text COLLATE "C"),
       ('courses.id'::text COLLATE "C"),
       ('gallery_images.id'::text COLLATE "C"),
       ('payments.id'::text COLLATE "C"),
@@ -209,10 +217,13 @@ select results_eq(
       ('reviews.id'::text COLLATE "C"),
       ('reviews.is_anonymous'::text COLLATE "C"),
       ('reviews.likes_count'::text COLLATE "C"),
+      ('reviews.created_at'::text COLLATE "C"),
+      ('reviews.status'::text COLLATE "C"),
       ('sessions.id'::text COLLATE "C"),
       ('student_assessments.id'::text COLLATE "C"),
       ('universities.id'::text COLLATE "C"),
-      ('universities.created_at'::text COLLATE "C")
+      ('universities.created_at'::text COLLATE "C"),
+      ('universities.representative_id'::text COLLATE "C")
   $$,
   'creates defaults only on the columns declared by the blueprint'
 );
