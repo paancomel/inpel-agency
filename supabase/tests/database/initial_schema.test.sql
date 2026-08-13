@@ -6,7 +6,7 @@ select plan(12);
 
 select results_eq(
   $$
-    select table_name::text
+    select table_name::text COLLATE "C"
     from information_schema.tables
     where table_schema = 'public'
       and table_name in (
@@ -26,24 +26,24 @@ select results_eq(
   $$,
   $$
     values
-      ('comments'::text),
-      ('courses'::text),
-      ('gallery_images'::text),
-      ('payments'::text),
-      ('profiles'::text),
-      ('recommendation_results'::text),
-      ('review_likes'::text),
-      ('reviews'::text),
-      ('sessions'::text),
-      ('student_assessments'::text),
-      ('universities'::text)
+      ('comments'::text COLLATE "C"),
+      ('courses'::text COLLATE "C"),
+      ('gallery_images'::text COLLATE "C"),
+      ('payments'::text COLLATE "C"),
+      ('profiles'::text COLLATE "C"),
+      ('recommendation_results'::text COLLATE "C"),
+      ('review_likes'::text COLLATE "C"),
+      ('reviews'::text COLLATE "C"),
+      ('sessions'::text COLLATE "C"),
+      ('student_assessments'::text COLLATE "C"),
+      ('universities'::text COLLATE "C")
   $$,
   'creates every blueprint table in the public schema'
 );
 
 select results_eq(
   $$
-    select table_name::text, count(*)::bigint
+    select table_name::text COLLATE "C", count(*)::bigint
     from information_schema.columns
     where table_schema = 'public'
       and table_name in (
@@ -56,24 +56,24 @@ select results_eq(
   $$,
   $$
     values
-      ('comments'::text, 4::bigint),
-      ('courses'::text, 6::bigint),
-      ('gallery_images'::text, 4::bigint),
-      ('payments'::text, 4::bigint),
-      ('profiles'::text, 6::bigint),
-      ('recommendation_results'::text, 5::bigint),
-      ('review_likes'::text, 3::bigint),
-      ('reviews'::text, 6::bigint),
-      ('sessions'::text, 8::bigint),
-      ('student_assessments'::text, 8::bigint),
-      ('universities'::text, 11::bigint)
+      ('comments'::text COLLATE "C", 4::bigint),
+      ('courses'::text COLLATE "C", 6::bigint),
+      ('gallery_images'::text COLLATE "C", 4::bigint),
+      ('payments'::text COLLATE "C", 4::bigint),
+      ('profiles'::text COLLATE "C", 6::bigint),
+      ('recommendation_results'::text COLLATE "C", 5::bigint),
+      ('review_likes'::text COLLATE "C", 3::bigint),
+      ('reviews'::text COLLATE "C", 6::bigint),
+      ('sessions'::text COLLATE "C", 8::bigint),
+      ('student_assessments'::text COLLATE "C", 8::bigint),
+      ('universities'::text COLLATE "C", 11::bigint)
   $$,
   'creates the exact number of columns declared for each table'
 );
 
 select results_eq(
   $$
-    select constraint_name::text
+    select constraint_name::text COLLATE "C"
     from information_schema.table_constraints
     where constraint_schema = 'public'
       and constraint_type = 'PRIMARY KEY'
@@ -86,24 +86,24 @@ select results_eq(
   $$,
   $$
     values
-      ('comments_pkey'::text),
-      ('courses_pkey'::text),
-      ('gallery_images_pkey'::text),
-      ('payments_pkey'::text),
-      ('profiles_pkey'::text),
-      ('recommendation_results_pkey'::text),
-      ('review_likes_pkey'::text),
-      ('reviews_pkey'::text),
-      ('sessions_pkey'::text),
-      ('student_assessments_pkey'::text),
-      ('universities_pkey'::text)
+      ('comments_pkey'::text COLLATE "C"),
+      ('courses_pkey'::text COLLATE "C"),
+      ('gallery_images_pkey'::text COLLATE "C"),
+      ('payments_pkey'::text COLLATE "C"),
+      ('profiles_pkey'::text COLLATE "C"),
+      ('recommendation_results_pkey'::text COLLATE "C"),
+      ('review_likes_pkey'::text COLLATE "C"),
+      ('reviews_pkey'::text COLLATE "C"),
+      ('sessions_pkey'::text COLLATE "C"),
+      ('student_assessments_pkey'::text COLLATE "C"),
+      ('universities_pkey'::text COLLATE "C")
   $$,
   'creates a primary key for every blueprint table'
 );
 
 select results_eq(
   $$
-    select constraint_name::text
+    select constraint_name::text COLLATE "C"
     from information_schema.table_constraints
     where constraint_schema = 'public'
       and constraint_type = 'UNIQUE'
@@ -112,17 +112,17 @@ select results_eq(
   $$,
   $$
     values
-      ('courses_mqa_code_key'::text),
-      ('profiles_email_key'::text),
-      ('review_likes_review_id_user_id_key'::text),
-      ('universities_name_key'::text)
+      ('courses_mqa_code_key'::text COLLATE "C"),
+      ('profiles_email_key'::text COLLATE "C"),
+      ('review_likes_review_id_user_id_key'::text COLLATE "C"),
+      ('universities_name_key'::text COLLATE "C")
   $$,
   'creates every declared single-column and composite unique constraint'
 );
 
 select results_eq(
   $$
-    select tc.constraint_name::text, rc.delete_rule::text
+    select tc.constraint_name::text COLLATE "C", rc.delete_rule::text COLLATE "C"
     from information_schema.table_constraints as tc
     join information_schema.referential_constraints as rc
       on rc.constraint_schema = tc.constraint_schema
@@ -133,28 +133,28 @@ select results_eq(
   $$,
   $$
     values
-      ('comments_review_id_fkey'::text, 'CASCADE'::text),
-      ('comments_user_id_fkey'::text, 'NO ACTION'::text),
-      ('courses_university_id_fkey'::text, 'CASCADE'::text),
-      ('gallery_images_university_id_fkey'::text, 'CASCADE'::text),
-      ('payments_session_id_fkey'::text, 'NO ACTION'::text),
-      ('profiles_id_fkey'::text, 'NO ACTION'::text),
-      ('recommendation_results_session_id_fkey'::text, 'NO ACTION'::text),
-      ('recommendation_results_university_id_fkey'::text, 'NO ACTION'::text),
-      ('review_likes_review_id_fkey'::text, 'CASCADE'::text),
-      ('review_likes_user_id_fkey'::text, 'NO ACTION'::text),
-      ('reviews_university_id_fkey'::text, 'NO ACTION'::text),
-      ('reviews_user_id_fkey'::text, 'NO ACTION'::text),
-      ('sessions_parent_id_fkey'::text, 'NO ACTION'::text),
-      ('student_assessments_session_id_fkey'::text, 'NO ACTION'::text),
-      ('student_assessments_student_id_fkey'::text, 'NO ACTION'::text)
+      ('comments_review_id_fkey'::text COLLATE "C", 'CASCADE'::text COLLATE "C"),
+      ('comments_user_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('courses_university_id_fkey'::text COLLATE "C", 'CASCADE'::text COLLATE "C"),
+      ('gallery_images_university_id_fkey'::text COLLATE "C", 'CASCADE'::text COLLATE "C"),
+      ('payments_session_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('profiles_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('recommendation_results_session_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('recommendation_results_university_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('review_likes_review_id_fkey'::text COLLATE "C", 'CASCADE'::text COLLATE "C"),
+      ('review_likes_user_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('reviews_university_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('reviews_user_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('sessions_parent_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('student_assessments_session_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('student_assessments_student_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C")
   $$,
   'creates all foreign keys and only the specified cascading deletes'
 );
 
 select results_eq(
   $$
-    select table_name::text, count(*)::bigint
+    select table_name::text COLLATE "C", count(*)::bigint
     from information_schema.columns
     where table_schema = 'public'
       and is_nullable = 'NO'
@@ -168,24 +168,24 @@ select results_eq(
   $$,
   $$
     values
-      ('comments'::text, 2::bigint),
-      ('courses'::text, 2::bigint),
-      ('gallery_images'::text, 2::bigint),
-      ('payments'::text, 3::bigint),
-      ('profiles'::text, 3::bigint),
-      ('recommendation_results'::text, 2::bigint),
-      ('review_likes'::text, 1::bigint),
-      ('reviews'::text, 1::bigint),
-      ('sessions'::text, 2::bigint),
-      ('student_assessments'::text, 1::bigint),
-      ('universities'::text, 2::bigint)
+      ('comments'::text COLLATE "C", 2::bigint),
+      ('courses'::text COLLATE "C", 2::bigint),
+      ('gallery_images'::text COLLATE "C", 2::bigint),
+      ('payments'::text COLLATE "C", 3::bigint),
+      ('profiles'::text COLLATE "C", 3::bigint),
+      ('recommendation_results'::text COLLATE "C", 2::bigint),
+      ('review_likes'::text COLLATE "C", 1::bigint),
+      ('reviews'::text COLLATE "C", 1::bigint),
+      ('sessions'::text COLLATE "C", 2::bigint),
+      ('student_assessments'::text COLLATE "C", 1::bigint),
+      ('universities'::text COLLATE "C", 2::bigint)
   $$,
   'preserves the blueprint nullability rules'
 );
 
 select results_eq(
   $$
-    select (table_name || '.' || column_name)::text
+    select (table_name || '.' || column_name)::text COLLATE "C"
     from information_schema.columns
     where table_schema = 'public'
       and column_default is not null
@@ -198,28 +198,28 @@ select results_eq(
   $$,
   $$
     values
-      ('comments.id'::text),
-      ('courses.id'::text),
-      ('gallery_images.id'::text),
-      ('payments.id'::text),
-      ('profiles.has_unlocked_tea'::text),
-      ('profiles.created_at'::text),
-      ('recommendation_results.id'::text),
-      ('review_likes.id'::text),
-      ('reviews.id'::text),
-      ('reviews.is_anonymous'::text),
-      ('reviews.likes_count'::text),
-      ('sessions.id'::text),
-      ('student_assessments.id'::text),
-      ('universities.id'::text),
-      ('universities.created_at'::text)
+      ('comments.id'::text COLLATE "C"),
+      ('courses.id'::text COLLATE "C"),
+      ('gallery_images.id'::text COLLATE "C"),
+      ('payments.id'::text COLLATE "C"),
+      ('profiles.has_unlocked_tea'::text COLLATE "C"),
+      ('profiles.created_at'::text COLLATE "C"),
+      ('recommendation_results.id'::text COLLATE "C"),
+      ('review_likes.id'::text COLLATE "C"),
+      ('reviews.id'::text COLLATE "C"),
+      ('reviews.is_anonymous'::text COLLATE "C"),
+      ('reviews.likes_count'::text COLLATE "C"),
+      ('sessions.id'::text COLLATE "C"),
+      ('student_assessments.id'::text COLLATE "C"),
+      ('universities.id'::text COLLATE "C"),
+      ('universities.created_at'::text COLLATE "C")
   $$,
   'creates defaults only on the columns declared by the blueprint'
 );
 
 select results_eq(
   $$
-    select (table_name || '.' || column_name)::text
+    select (table_name || '.' || column_name)::text COLLATE "C"
     from information_schema.columns
     where table_schema = 'public'
       and column_default like '%uuid_generate_v4%'
@@ -232,23 +232,23 @@ select results_eq(
   $$,
   $$
     values
-      ('comments.id'::text),
-      ('courses.id'::text),
-      ('gallery_images.id'::text),
-      ('payments.id'::text),
-      ('recommendation_results.id'::text),
-      ('review_likes.id'::text),
-      ('reviews.id'::text),
-      ('sessions.id'::text),
-      ('student_assessments.id'::text),
-      ('universities.id'::text)
+      ('comments.id'::text COLLATE "C"),
+      ('courses.id'::text COLLATE "C"),
+      ('gallery_images.id'::text COLLATE "C"),
+      ('payments.id'::text COLLATE "C"),
+      ('recommendation_results.id'::text COLLATE "C"),
+      ('review_likes.id'::text COLLATE "C"),
+      ('reviews.id'::text COLLATE "C"),
+      ('sessions.id'::text COLLATE "C"),
+      ('student_assessments.id'::text COLLATE "C"),
+      ('universities.id'::text COLLATE "C")
   $$,
   'uses uuid_generate_v4 for every generated UUID primary key'
 );
 
 select results_eq(
   $$
-    select constraint_name::text
+    select constraint_name::text COLLATE "C"
     from information_schema.table_constraints
     where constraint_schema = 'public'
       and constraint_type = 'CHECK'
@@ -263,18 +263,18 @@ select results_eq(
   $$,
   $$
     values
-      ('payments_status_check'::text),
-      ('profiles_role_check'::text),
-      ('recommendation_results_match_score_check'::text),
-      ('reviews_likes_count_check'::text),
-      ('sessions_status_check'::text)
+      ('payments_status_check'::text COLLATE "C"),
+      ('profiles_role_check'::text COLLATE "C"),
+      ('recommendation_results_match_score_check'::text COLLATE "C"),
+      ('reviews_likes_count_check'::text COLLATE "C"),
+      ('sessions_status_check'::text COLLATE "C")
   $$,
   'enforces the finite status, role, percentage, and count domains'
 );
 
 select results_eq(
   $$
-    select indexname::text
+    select indexname::text COLLATE "C"
     from pg_indexes
     where schemaname = 'public'
       and indexname like '%_idx'
@@ -287,26 +287,26 @@ select results_eq(
   $$,
   $$
     values
-      ('comments_review_id_idx'::text),
-      ('comments_user_id_idx'::text),
-      ('courses_university_id_idx'::text),
-      ('gallery_images_university_id_idx'::text),
-      ('payments_session_id_idx'::text),
-      ('recommendation_results_session_id_idx'::text),
-      ('recommendation_results_university_id_idx'::text),
-      ('review_likes_user_id_idx'::text),
-      ('reviews_university_id_idx'::text),
-      ('reviews_user_id_idx'::text),
-      ('sessions_parent_id_idx'::text),
-      ('student_assessments_session_id_idx'::text),
-      ('student_assessments_student_id_idx'::text)
+      ('comments_review_id_idx'::text COLLATE "C"),
+      ('comments_user_id_idx'::text COLLATE "C"),
+      ('courses_university_id_idx'::text COLLATE "C"),
+      ('gallery_images_university_id_idx'::text COLLATE "C"),
+      ('payments_session_id_idx'::text COLLATE "C"),
+      ('recommendation_results_session_id_idx'::text COLLATE "C"),
+      ('recommendation_results_university_id_idx'::text COLLATE "C"),
+      ('review_likes_user_id_idx'::text COLLATE "C"),
+      ('reviews_university_id_idx'::text COLLATE "C"),
+      ('reviews_user_id_idx'::text COLLATE "C"),
+      ('sessions_parent_id_idx'::text COLLATE "C"),
+      ('student_assessments_session_id_idx'::text COLLATE "C"),
+      ('student_assessments_student_id_idx'::text COLLATE "C")
   $$,
   'indexes every foreign key not already covered by a leading unique key'
 );
 
 select results_eq(
   $$
-    select (table_name || '.' || column_name || ':' || data_type)::text
+    select (table_name || '.' || column_name || ':' || data_type)::text COLLATE "C"
     from information_schema.columns
     where table_schema = 'public'
       and column_name = 'created_at'
@@ -315,8 +315,8 @@ select results_eq(
   $$,
   $$
     values
-      ('profiles.created_at:timestamp without time zone'::text),
-      ('universities.created_at:timestamp without time zone'::text)
+      ('profiles.created_at:timestamp without time zone'::text COLLATE "C"),
+      ('universities.created_at:timestamp without time zone'::text COLLATE "C")
   $$,
   'preserves the blueprint timestamp data type'
 );

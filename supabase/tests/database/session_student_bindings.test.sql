@@ -23,7 +23,7 @@ select columns_are(
 
 select results_eq(
   $$
-    select tc.constraint_name::text, rc.delete_rule::text
+    select tc.constraint_name::text COLLATE "C", rc.delete_rule::text COLLATE "C"
     from information_schema.table_constraints as tc
     join information_schema.referential_constraints as rc
       on rc.constraint_schema = tc.constraint_schema
@@ -35,10 +35,10 @@ select results_eq(
   $$,
   $$
     values
-      ('session_student_bindings_claimed_by_fkey'::text, 'NO ACTION'::text),
-      ('session_student_bindings_revoked_by_fkey'::text, 'NO ACTION'::text),
-      ('session_student_bindings_session_id_fkey'::text, 'CASCADE'::text),
-      ('session_student_bindings_student_id_fkey'::text, 'NO ACTION'::text)
+      ('session_student_bindings_claimed_by_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('session_student_bindings_revoked_by_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C"),
+      ('session_student_bindings_session_id_fkey'::text COLLATE "C", 'CASCADE'::text COLLATE "C"),
+      ('session_student_bindings_student_id_fkey'::text COLLATE "C", 'NO ACTION'::text COLLATE "C")
   $$,
   'uses cascade only for the session owner row and no action for profile actors'
 );
@@ -295,7 +295,7 @@ select is(
 
 select results_eq(
   $$
-    select indexname::text
+    select indexname::text COLLATE "C"
     from pg_indexes
     where schemaname = 'public'
       and tablename = 'session_student_bindings'
@@ -303,14 +303,14 @@ select results_eq(
   $$,
   $$
     values
-      ('session_student_bindings_claimed_by_idx'::text),
-      ('session_student_bindings_lifecycle_idx'::text),
-      ('session_student_bindings_pkey'::text),
-      ('session_student_bindings_revoked_by_idx'::text),
-      ('session_student_bindings_session_id_key'::text),
-      ('session_student_bindings_session_id_student_id_key'::text),
-      ('session_student_bindings_student_id_idx'::text),
-      ('session_student_bindings_token_digest_key'::text)
+      ('session_student_bindings_claimed_by_idx'::text COLLATE "C"),
+      ('session_student_bindings_lifecycle_idx'::text COLLATE "C"),
+      ('session_student_bindings_pkey'::text COLLATE "C"),
+      ('session_student_bindings_revoked_by_idx'::text COLLATE "C"),
+      ('session_student_bindings_session_id_key'::text COLLATE "C"),
+      ('session_student_bindings_session_id_student_id_key'::text COLLATE "C"),
+      ('session_student_bindings_student_id_idx'::text COLLATE "C"),
+      ('session_student_bindings_token_digest_key'::text COLLATE "C")
   $$,
   'creates the required binding and lifecycle indexes'
 );
