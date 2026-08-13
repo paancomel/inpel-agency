@@ -10,10 +10,13 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), tailwindcss()],
     define: {
       "process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY": JSON.stringify(
-        environment.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+          environment.VITE_SUPABASE_PUBLISHABLE_KEY ??
+          environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+          environment.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+          "",
       ),
       "process.env.NEXT_PUBLIC_SUPABASE_URL": JSON.stringify(
-        environment.NEXT_PUBLIC_SUPABASE_URL ?? "",
+        environment.VITE_SUPABASE_URL ?? environment.NEXT_PUBLIC_SUPABASE_URL ?? "",
       ),
     },
     test: {

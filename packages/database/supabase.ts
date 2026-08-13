@@ -3,7 +3,10 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./types.js";
 
 export interface SupabaseEnvironment {
+  VITE_SUPABASE_URL?: string | undefined;
+  VITE_SUPABASE_PUBLISHABLE_KEY?: string | undefined;
   NEXT_PUBLIC_SUPABASE_URL?: string | undefined;
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?: string | undefined;
   NEXT_PUBLIC_SUPABASE_ANON_KEY?: string | undefined;
 }
 
@@ -48,24 +51,28 @@ function readJwtRole(key: string): unknown {
  * The anon key is designed for browser use; never place a service-role key here.
  */
 export function getSupabaseConfig(environment: SupabaseEnvironment): SupabaseConfig {
-  const url = environment.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const anonKey = environment.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  const url = (environment.VITE_SUPABASE_URL ?? environment.NEXT_PUBLIC_SUPABASE_URL)?.trim();
+  const anonKey = (
+    environment.VITE_SUPABASE_PUBLISHABLE_KEY ??
+    environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    environment.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )?.trim();
 
   if (!url) {
     throw new SupabaseConfigurationError(
-      "Missing NEXT_PUBLIC_SUPABASE_URL. Add it to the environment before importing @repo/database.",
+      "Missing VITE_SUPABASE_URL. Add it to the environment before importing @repo/database.",
     );
   }
 
   if (!anonKey) {
     throw new SupabaseConfigurationError(
-      "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY. Add it to the environment before importing @repo/database.",
+      "Missing VITE_SUPABASE_PUBLISHABLE_KEY. Add it to the environment before importing @repo/database.",
     );
   }
 
   if (anonKey.startsWith("sb_secret_") || readJwtRole(anonKey) === "service_role") {
     throw new SupabaseConfigurationError(
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY must not contain a service-role or secret key.",
+      "The browser Supabase key must not contain a service-role or secret key.",
     );
   }
 
@@ -77,7 +84,7 @@ export function getSupabaseConfig(environment: SupabaseEnvironment): SupabaseCon
     }
   } catch {
     throw new SupabaseConfigurationError(
-      "NEXT_PUBLIC_SUPABASE_URL must be a valid HTTP(S) URL.",
+      "VITE_SUPABASE_URL must be a valid HTTP(S) URL.",
     );
   }
 
@@ -87,7 +94,10 @@ export function getSupabaseConfig(environment: SupabaseEnvironment): SupabaseCon
 /** Creates a strongly typed client, with optional environment injection for tests. */
 export function createSupabaseClient(
   environment: SupabaseEnvironment = {
+    VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
+    VITE_SUPABASE_PUBLISHABLE_KEY: process.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
 ): TypedSupabaseClient {

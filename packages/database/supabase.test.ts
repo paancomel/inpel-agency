@@ -12,30 +12,39 @@ describe("getSupabaseConfig", () => {
   it("returns trimmed public Supabase configuration", () => {
     expect(
       getSupabaseConfig({
-        NEXT_PUBLIC_SUPABASE_URL: "  https://project.supabase.co/  ",
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: "  anon-key  ",
+        VITE_SUPABASE_URL: "  https://project.supabase.co/  ",
+        VITE_SUPABASE_PUBLISHABLE_KEY: "  publishable-key  ",
       }),
     ).toEqual({
       url: "https://project.supabase.co/",
-      anonKey: "anon-key",
+      anonKey: "publishable-key",
     });
+  });
+
+  it("supports the legacy public environment names during migration", () => {
+    expect(
+      getSupabaseConfig({
+        NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: "legacy-anon-key",
+      }),
+    ).toEqual({ url: "https://project.supabase.co", anonKey: "legacy-anon-key" });
   });
 
   it.each([
     [
       { NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key" },
-      "Missing NEXT_PUBLIC_SUPABASE_URL. Add it to the environment before importing @repo/database.",
+      "Missing VITE_SUPABASE_URL. Add it to the environment before importing @repo/database.",
     ],
     [
       { NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co" },
-      "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY. Add it to the environment before importing @repo/database.",
+      "Missing VITE_SUPABASE_PUBLISHABLE_KEY. Add it to the environment before importing @repo/database.",
     ],
     [
       {
         NEXT_PUBLIC_SUPABASE_URL: "not-a-url",
         NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
       },
-      "NEXT_PUBLIC_SUPABASE_URL must be a valid HTTP(S) URL.",
+      "VITE_SUPABASE_URL must be a valid HTTP(S) URL.",
     ],
   ])("rejects invalid environment configuration", (environment, expectedMessage) => {
     expect(() => getSupabaseConfig(environment)).toThrowError(
@@ -46,7 +55,7 @@ describe("getSupabaseConfig", () => {
   it.each([
     "sb_secret_do-not-expose",
     `header.${Buffer.from(JSON.stringify({ role: "service_role" })).toString("base64url")}.signature`,
-  ])("rejects privileged keys in the public anon-key variable", (privilegedKey) => {
+  ])("rejects privileged keys in the browser key variable", (privilegedKey) => {
     expect(() =>
       getSupabaseConfig({
         NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
@@ -54,7 +63,7 @@ describe("getSupabaseConfig", () => {
       }),
     ).toThrowError(
       new SupabaseConfigurationError(
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY must not contain a service-role or secret key.",
+        "The browser Supabase key must not contain a service-role or secret key.",
       ),
     );
   });
