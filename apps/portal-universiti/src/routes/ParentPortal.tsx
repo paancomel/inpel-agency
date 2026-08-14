@@ -7,9 +7,10 @@ import { Link } from "react-router-dom";
 
 import { ParentAuthGate } from "../components/ParentAuthGate";
 import { HOUSEHOLD_INCOME_OPTIONS, MALAYSIA_LOCATIONS, PARENT_PREFERENCE_OPTIONS } from "../lib/assessment-data";
-import { authenticateParentAccount, getAuthenticatedStudent, revokeParentStudentInvitation, syncParentSession, type StudentAuthMode } from "../lib/portal-data";
+import { clearParentDraft, cacheParentDraft, createParentDraft, readParentDraft } from "../lib/parent-draft";
+import { authenticateParentAccount, beginStudentOAuth, getAuthenticatedStudent, revokeParentStudentInvitation, syncParentSession, type AuthProvider, type StudentAuthMode } from "../lib/portal-data";
 import { createSessionRecord, saveSession, type SessionRecord } from "../lib/storage";
-import { parentProfileSchema, type ParentProfile } from "../lib/validation";
+import { parentPrioritiesSchema, type ParentPriorities, type ParentProfile } from "../lib/validation";
 
 const preferenceQuestions = [
   { key: "campusVibe", question: "What kind of campus vibe are we looking for?", options: PARENT_PREFERENCE_OPTIONS.campusVibe },
@@ -22,15 +23,18 @@ export function ParentPortal() {
   const [session, setSession] = useState<SessionRecord | null>(null);
   const [invitationToken, setInvitationToken] = useState<string | null>(null);
   const [parentEmail, setParentEmail] = useState<string | null>(null);
+  const [parentDraft] = useState(() => readParentDraft());
+  const [pendingPriorities, setPendingPriorities] = useState<ParentPriorities | null>(() => parentDraft?.priorities ?? null);
   const [authError, setAuthError] = useState("");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isCreatingInvitation, setIsCreatingInvitation] = useState(false);
   const [copied, setCopied] = useState(false);
   const [syncMessage, setSyncMessage] = useState("");
   const [isRevoking, setIsRevoking] = useState(false);
   const [isRevoked, setIsRevoked] = useState(false);
-  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<ParentProfile>({
-    resolver: zodResolver(parentProfileSchema),
-    defaultValues: { email: "", studentEmail: "", preferences: {} },
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ParentPriorities>({
+    resolver: zodResolver(parentPrioritiesSchema),
+    defaultValues: parentDraft?.priorities ?? { studentEmail: "", preferences: {} },
   });
 
   useEffect(() => {
@@ -39,24 +43,28 @@ export function ParentPortal() {
       (account) => {
         if (!isActive) return;
         setParentEmail(account.email);
-        setValue("email", account.email, { shouldValidate: true });
       },
       () => undefined,
     );
     return () => { isActive = false; };
-  }, [setValue]);
+  }, []);
 
-  async function authenticateParent(email: string, password: string, mode: StudentAuthMode) {
+  async function authenticateParent(provider: AuthProvider, email: string | undefined, password: string | undefined, mode: StudentAuthMode) {
     setIsAuthenticating(true);
     setAuthError("");
     try {
+      if (provider !== "password") {
+        await beginStudentOAuth(provider, `${window.location.origin}/auth/callback`);
+        return;
+      }
+      if (!email || !password) throw new Error("Enter a valid email and password.");
       const emailRedirectTo = mode === "signup" ? `${window.location.origin}/auth/callback` : undefined;
       const account = await authenticateParentAccount(email, password, mode, emailRedirectTo);
       if (account.confirmationRequired || account.source !== "cloud" || !account.userId) {
-        throw new Error("Confirm your parent email, then return here to finish creating the invitation.");
+        setAuthError("Confirm your parent email, then return here to finish creating the invitation.");
+        return;
       }
       setParentEmail(account.email);
-      setValue("email", account.email, { shouldValidate: true });
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Parent authentication failed.");
     } finally {
@@ -64,13 +72,24 @@ export function ParentPortal() {
     }
   }
 
-  const onSubmit = handleSubmit(async (profile) => {
-    if (!parentEmail) {
-      setAuthError("Authenticate as a parent before creating an invitation.");
+  const onSubmit = handleSubmit((priorities) => {
+    if (!cacheParentDraft(createParentDraft(priorities))) {
+      setSyncMessage("We could not save this family draft in your browser. Please check browser storage and try again.");
       return;
     }
+    setPendingPriorities(priorities);
+    setSyncMessage("");
+  });
+
+  async function createInvitation() {
+    if (!parentEmail || !pendingPriorities) {
+      setAuthError("Confirm the parent account before creating an invitation.");
+      return;
+    }
+    setIsCreatingInvitation(true);
     try {
-      const result = await syncParentSession({ ...profile, email: parentEmail });
+      const profile: ParentProfile = { ...pendingPriorities, email: parentEmail };
+      const result = await syncParentSession(profile);
       if (!result.sessionId || !result.invitationToken) throw new Error("The invitation service returned an incomplete response.");
       const nextSession = createSessionRecord({ ...profile, email: parentEmail }, result.sessionId);
       if (!saveSession(nextSession)) {
@@ -80,12 +99,15 @@ export function ParentPortal() {
       setInvitationToken(result.invitationToken);
       setIsRevoked(false);
       setSyncMessage("Securely created. The invitation is ready to share.");
+      clearParentDraft();
     } catch (error) {
       setSession(null);
       setInvitationToken(null);
       setSyncMessage(error instanceof Error ? error.message : "The invitation was not created securely. Please reconnect to Supabase and try again.");
+    } finally {
+      setIsCreatingInvitation(false);
     }
-  });
+  }
 
   const shareUrl = session && invitationToken ? `${window.location.origin}/student/${session.id}?token=${encodeURIComponent(invitationToken)}` : "";
 
@@ -114,7 +136,10 @@ export function ParentPortal() {
 
   if (session && invitationToken) return <InvitationReady session={session} shareUrl={shareUrl} copied={copied} syncMessage={syncMessage} onCopy={copyLink} invitationToken={invitationToken} isRevoked={isRevoked} isRevoking={isRevoking} onRevoke={revokeInvitation} />;
 
-  if (!parentEmail) return <section className="px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20"><ParentAuthGate isSubmitting={isAuthenticating} onAuthenticate={authenticateParent} />{authError && <p className="mx-auto mt-5 max-w-xl border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{authError}</p>}</section>;
+  if (pendingPriorities) {
+    if (!parentEmail) return <section className="px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20"><ParentAuthGate isSubmitting={isAuthenticating} onAuthenticate={authenticateParent} />{authError && <p className="mx-auto mt-5 max-w-xl border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{authError}</p>}</section>;
+    return <ParentAccountConfirmation email={parentEmail} isSubmitting={isCreatingInvitation} onContinue={createInvitation} onBack={() => setPendingPriorities(null)} />;
+  }
 
   return (
     <section className="relative overflow-hidden px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
@@ -143,7 +168,6 @@ export function ParentPortal() {
               <select {...register("income")} id="income" className="field-control"><option value="">Select an income range</option>{HOUSEHOLD_INCOME_OPTIONS.map((income) => <option key={income}>{income}</option>)}</select>
             </Field>
           </div>
-          <div className="mt-6"><Field id="email" label="Parent email" error={errors.email?.message}><input {...register("email")} id="email" type="email" readOnly aria-readonly="true" className="field-control bg-slate-100" /></Field><p className="mt-2 text-xs text-slate-500">This is taken from the signed-in parent account and cannot be changed here.</p></div>
           <div className="mt-6"><Field id="studentEmail" label="Student email" error={errors.studentEmail?.message}><input {...register("studentEmail")} id="studentEmail" type="email" autoComplete="email" placeholder="student@example.com" className="field-control" /></Field></div>
 
           <section className="mt-10 border-t border-slate-200 pt-8" aria-labelledby="parental-preferences-title">
@@ -158,15 +182,30 @@ export function ParentPortal() {
           </section>
 
           {syncMessage && <p className="mt-6 border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{syncMessage}</p>}
-          <button disabled={isSubmitting} type="submit" className="mt-8 flex w-full items-center justify-center gap-2 bg-forest px-6 py-4 font-bold text-white transition hover:bg-leaf disabled:cursor-wait disabled:opacity-60">{isSubmitting ? "Preparing invitation…" : "Generate Student Link"}</button>
-          <p className="mt-4 text-center text-xs leading-5 text-slate-500">Your answers are used only to create this university match session.</p>
+          <button disabled={isSubmitting} type="submit" className="mt-8 flex w-full items-center justify-center gap-2 bg-forest px-6 py-4 font-bold text-white transition hover:bg-leaf disabled:cursor-wait disabled:opacity-60">{isSubmitting ? "Saving your answers…" : "Continue to secure your invitation"}</button>
+          <p className="mt-4 text-center text-xs leading-5 text-slate-500">Your answers stay in this browser until you secure the invitation with a parent account.</p>
         </form>
       </div>
     </section>
   );
 }
 
-function PreferenceQuestion({ index, item, register, error }: { index: number; item: (typeof preferenceQuestions)[number]; register: UseFormRegister<ParentProfile>; error: string | undefined }) {
+function ParentAccountConfirmation({ email, isSubmitting, onContinue, onBack }: { email: string; isSubmitting: boolean; onContinue: () => Promise<void>; onBack: () => void }) {
+  return (
+    <section className="grid min-h-[65vh] place-items-center bg-cream px-4 py-12 sm:px-6">
+      <div className="w-full max-w-xl border border-emerald-900/10 bg-[#fafdff] p-7 shadow-[0_24px_70px_rgba(18,63,50,0.08)] sm:p-10">
+        <p className="text-xs font-bold tracking-[0.16em] text-leaf uppercase">Family priorities complete</p>
+        <h1 className="mt-2 font-display text-4xl font-bold text-forest">Continue as this parent?</h1>
+        <p className="mt-4 leading-7 text-slate-600">Your answers are ready. We will create the private student invitation only after you confirm this account.</p>
+        <p className="mt-6 border border-slate-200 bg-white px-4 py-3 font-bold text-forest">{email}</p>
+        <button type="button" disabled={isSubmitting} onClick={() => { void onContinue(); }} className="mt-6 w-full bg-forest px-6 py-4 font-bold text-white hover:bg-leaf disabled:opacity-60">{isSubmitting ? "Creating invitation…" : "Continue as this parent"}</button>
+        <button type="button" disabled={isSubmitting} onClick={onBack} className="mt-4 w-full px-6 py-3 text-sm font-bold text-slate-600 hover:text-forest">Review family answers</button>
+      </div>
+    </section>
+  );
+}
+
+function PreferenceQuestion({ index, item, register, error }: { index: number; item: (typeof preferenceQuestions)[number]; register: UseFormRegister<ParentPriorities>; error: string | undefined }) {
   return (
     <fieldset>
       <legend className="text-base font-bold leading-6 text-forest"><span className="mr-2 text-leaf">Q{index}.</span>{item.question}</legend>

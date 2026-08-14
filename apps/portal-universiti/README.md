@@ -6,7 +6,7 @@ React single-page application for the parent-guided university matching journey 
 
 | Route | Purpose |
 | --- | --- |
-| `/` | Parent priorities form and student invitation creation |
+| `/` | Parent priorities, parent-account confirmation, and student invitation creation |
 | `/email-notification/:id` | Invitation email preview |
 | `/student/:id` | Resumable personality, psychometric, dynamic SPM, Vibe Check, and authentication journey |
 | `/auth/callback?sessionId=:id` | OAuth/email-confirmation callback that restores and commits the cached assessment |
@@ -34,12 +34,14 @@ The Vite configuration deliberately maps the established `NEXT_PUBLIC_SUPABASE_*
 
 All client access and schema types come from `@repo/database`. `src/lib/portal-data.ts` dynamically loads its exported singleton at the moment data is read or written; the app never calls `createClient` and never creates its own Supabase client.
 
+The parent journey keeps family priorities only in the current browser for up to 24 hours until the parent authenticates. After email/password, Google, or Facebook authentication, the parent explicitly confirms the account before the authenticated invitation RPC runs. Email confirmation can restore this draft only in the same browser/device.
+
 Writes and authentication target:
 
 - `sessions` for parent email, preferred location, monthly household income, four structured preferences, and lifecycle status;
 - `student_assessments` for dynamic SPM rows, the 16 Likert values, six structured Vibe Check answers, and the compatibility aggregate;
 - `payments` for the no-charge checkout result.
-- Supabase Auth for email/password sign-up or login plus Google and Facebook OAuth when the shared client and providers are configured.
+- Supabase Auth for parent and student email/password sign-up or login plus Google and Facebook OAuth when the shared client and providers are configured.
 
 University catalogue reads target `universities`. A local fallback keeps the prototype usable when public environment values or a reachable project are absent.
 

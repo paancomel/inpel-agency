@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 
-import { authenticateParentAccount, confirmCurrentParentOwnership, type StudentAuthMode } from "../lib/portal-data";
+import { authenticateParentAccount, beginStudentOAuth, confirmCurrentParentOwnership, type AuthProvider, type StudentAuthMode } from "../lib/portal-data";
 import { ParentAuthGate } from "./ParentAuthGate";
 
 type GateState = "checking" | "required" | "allowed";
@@ -29,10 +29,15 @@ export function ParentSessionGate({ sessionId, children }: { sessionId: string; 
     return () => { active = false; };
   }, [sessionId]);
 
-  async function authenticate(email: string, password: string, mode: StudentAuthMode) {
+  async function authenticate(provider: AuthProvider, email: string | undefined, password: string | undefined, mode: StudentAuthMode) {
     setIsAuthenticating(true);
     setError("");
     try {
+      if (provider !== "password") {
+        await beginStudentOAuth(provider, `${window.location.origin}/auth/callback`);
+        return;
+      }
+      if (!email || !password) throw new Error("Enter a valid email and password.");
       const account = await authenticateParentAccount(email, password, mode);
       if (account.confirmationRequired) throw new Error("Confirm your parent email, then return here to access this invitation.");
       await confirmCurrentParentOwnership(sessionId);

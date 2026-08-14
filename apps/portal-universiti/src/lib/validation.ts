@@ -26,6 +26,8 @@ export const parentProfileSchema = z.object({
   }),
 });
 
+export const parentPrioritiesSchema = parentProfileSchema.omit({ email: true });
+
 export const studentAccountSchema = z.object({
   email: z.string().trim().regex(emailPattern, "Please enter a valid student email address."),
   password: z.string().min(8, "Password must be at least 8 characters long."),
@@ -78,6 +80,7 @@ export const studentAssessmentSchema = z.object({
 export const sessionIdSchema = z.string().uuid();
 
 export type ParentProfile = z.infer<typeof parentProfileSchema>;
+export type ParentPriorities = z.infer<typeof parentPrioritiesSchema>;
 export type StudentAccount = z.infer<typeof studentAccountSchema>;
 export type StudentAssessment = z.infer<typeof studentAssessmentSchema>;
 export type AcademicSubject = z.infer<typeof academicSubjectSchema>;
