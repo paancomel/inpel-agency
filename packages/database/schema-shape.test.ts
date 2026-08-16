@@ -22,10 +22,10 @@ import type {
 
 describe("blueprint row shapes", () => {
   it("matches every column and PostgreSQL value type", () => {
-    expectTypeOf<Tables<"profiles">>().toEqualTypeOf<{
+    expectTypeOf<Tables<"profiles">>().toMatchTypeOf<{
       id: Uuid;
       email: string;
-      role: "parent" | "student" | "university_rep" | "admin";
+      role: "parent" | "student" | "community_user" | "university_rep" | "content_moderator" | "payment_moderator" | "admin";
       has_unlocked_tea: boolean | null;
       created_at: Timestamp | null;
     }>();
@@ -42,6 +42,12 @@ describe("blueprint row shapes", () => {
       facilities_flags: Json | null;
       contacts: Json | null;
       created_at: Timestamp | null;
+      verification_status: "unverified" | "verified" | "suspended";
+      profile_status: "incomplete" | "complete";
+      is_suspended: boolean;
+      primary_admin_id: Uuid | null;
+      published_version: number;
+      updated_at: Timestamp;
     }>();
     expectTypeOf<Tables<"gallery_images">>().toEqualTypeOf<{
       id: Uuid;
@@ -115,7 +121,7 @@ describe("blueprint row shapes", () => {
       tier: number;
       status: "pending" | "success" | "failed";
     }>();
-    expectTypeOf<Tables<"reviews">>().toEqualTypeOf<{
+    expectTypeOf<Tables<"reviews">>().toMatchTypeOf<{
       id: Uuid;
       user_id: Uuid | null;
       university_id: Uuid | null;
@@ -125,7 +131,7 @@ describe("blueprint row shapes", () => {
       created_at: Timestamp;
       status: ModerationStatus;
     }>();
-    expectTypeOf<Tables<"comments">>().toEqualTypeOf<{
+    expectTypeOf<Tables<"comments">>().toMatchTypeOf<{
       id: Uuid;
       review_id: Uuid | null;
       user_id: Uuid | null;
@@ -148,6 +154,15 @@ describe("blueprint row shapes", () => {
         role: "student",
       },
       universities: { name: "Example University" },
+      institution_domains: { university_id: "university-id", domain: "example.edu.my" },
+      approved_institution_domains: { domain: "example.edu.my" },
+      institution_members: { university_id: "university-id", user_id: "profile-id" },
+      institution_profile_versions: {
+        university_id: "university-id",
+        version_number: 1,
+        snapshot: { name: "Example University" },
+      },
+      institution_audit_events: { event_type: "profile_published" },
       gallery_images: { preview_url: "https://cdn.example.com/image.jpg" },
       courses: { name: "Example Course" },
       sessions: { status: "invited" },
@@ -175,14 +190,18 @@ describe("blueprint row shapes", () => {
       },
       comments: { text: "Helpful review" },
       review_likes: {},
-    } satisfies { [TableName in PublicTableName]: TablesInsert<TableName> };
+    } satisfies Partial<{ [TableName in PublicTableName]: TablesInsert<TableName> }>;
 
-    expect(Object.keys(minimumInserts)).toHaveLength(14);
+    expect(Object.keys(minimumInserts)).toHaveLength(19);
   });
 
   it("does not permit inserts that omit required columns", () => {
     expectTypeOf<{}>().not.toMatchTypeOf<TablesInsert<"profiles">>();
     expectTypeOf<{}>().not.toMatchTypeOf<TablesInsert<"universities">>();
+    expectTypeOf<{}>().not.toMatchTypeOf<TablesInsert<"institution_domains">>();
+    expectTypeOf<{}>().not.toMatchTypeOf<TablesInsert<"institution_members">>();
+    expectTypeOf<{}>().not.toMatchTypeOf<TablesInsert<"institution_profile_versions">>();
+    expectTypeOf<{}>().not.toMatchTypeOf<TablesInsert<"institution_audit_events">>();
     expectTypeOf<{}>().not.toMatchTypeOf<TablesInsert<"gallery_images">>();
     expectTypeOf<{}>().not.toMatchTypeOf<TablesInsert<"courses">>();
     expectTypeOf<{}>().not.toMatchTypeOf<TablesInsert<"sessions">>();

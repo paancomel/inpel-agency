@@ -1,133 +1,88 @@
-import { Check, ChevronLeft, ChevronRight, PartyPopper, ShieldCheck } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-
+// HERO: a five-stage contribution trail that makes a demanding review feel achievable.
+import { ArrowLeft, ArrowRight, Check, ShieldCheck } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReviewSyncStatus } from "../lib/review-data";
-import { STUDY_YEARS, type ReviewDraft, type ReviewIdentity, type StudyYear, type UniversityTarget } from "../lib/types";
+import { clearDraft, loadDraft, saveDraft } from "../lib/storage";
+import { EMPTY_RATINGS, RATING_DIMENSIONS, STUDY_YEARS, type ExperienceKey, type ReviewDraft, type ReviewIdentity, type UniversityTarget } from "../lib/types";
 import { backgroundSchema, finalReviewSchema, toFieldErrors, type FieldErrors } from "../lib/validation";
-import { ModalShell } from "./ModalShell";
-import { StarRating } from "./StarRating";
 
-const VIBE_TAGS = ["Career-ready", "Collaborative", "Creative", "Fast-paced", "Supportive", "Social"];
+const EXPERIENCE_FIELDS: [ExperienceKey, string, string][] = [
+  ["transport", "Nearby transport", "What works, what does not, and the actual daily timing."],
+  ["food", "3 affordable places to eat", "Name three places and explain what makes them student-friendly."],
+  ["classes", "Timetable & class sessions", "Describe the rhythm, teaching sessions, and workload."],
+  ["commute", "Getting to and from class", "Walk us through your real daily route."],
+  ["activities", "Things to do nearby", "Share the enjoyable places students actually visit."],
+  ["prosCons", "Advantages & disadvantages", "Be specific and balanced."],
+  ["livingCost", "Living cost reality", "Explain where the money goes each month."],
+  ["safety", "Safety", "Share practical context for day and night."],
+  ["curfew", "Hostel curfew", "Explain the rules or state clearly if not applicable."],
+  ["career", "Career prospects", "What genuinely helps graduates enter work?"],
+  ["partTime", "Part-time work", "What opportunities are realistically available?"],
+  ["lecturers", "Lecturers who are good", "No personal attacks—focus on teaching qualities."],
+  ["boringClasses", "Classes that feel boring", "Explain the format or issue constructively."],
+  ["hangouts", "Where to spend time between classes", "Share the practical student spots."],
+];
+const wordCount = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
 
-interface ReviewWizardProps {
-  identity: ReviewIdentity | null;
-  universitySelection: {
-    status: "loading" | "ready" | "unavailable";
-    targets: UniversityTarget[];
-    message?: string;
-  };
-  onClose: () => void;
-  onRequireAuth: () => void;
-  onSubmit: (draft: ReviewDraft) => Promise<
-    { ok: true; status: ReviewSyncStatus } | { ok: false; message: string }
-  >;
+function newDraft(universityId?: string): ReviewDraft {
+  return { ...(universityId ? { universityId } : {}), course: "", year: "", ratings: { ...EMPTY_RATINGS }, rating: 0, greenFlags: "", redFlags: "", spillTheTea: "", vibeTags: [], isAnonymous: true, reviewType: "standard", experiences: {}, photos: {}, declarations: { terms: false, privacy: false, age: false, rights: false } };
 }
 
-export function ReviewWizard({ identity, universitySelection, onClose, onRequireAuth, onSubmit }: ReviewWizardProps) {
-  const [step, setStep] = useState(1);
-  const [errors, setErrors] = useState<FieldErrors>({});
-  const [formError, setFormError] = useState<string>();
-  const [submissionStatus, setSubmissionStatus] = useState<ReviewSyncStatus>("local");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [draft, setDraft] = useState<ReviewDraft>({
-    course: "",
-    year: "",
-    rating: 0,
-    greenFlags: "",
-    redFlags: "",
-    spillTheTea: "",
-    vibeTags: [],
-    isAnonymous: true,
-  });
-  const headingRef = useRef<HTMLHeadingElement>(null);
+interface Props {
+  identity: ReviewIdentity | null; universities: UniversityTarget[]; initialUniversityId?: string;
+  onRequireAuth: () => void; onSubmit: (draft: ReviewDraft) => Promise<{ ok: true; status: ReviewSyncStatus } | { ok: false; message: string }>;
+}
 
+export function ReviewWizard({ identity, universities, initialUniversityId, onRequireAuth, onSubmit }: Props) {
+  const restored = useMemo(() => loadDraft(), []);
+  const [draft, setDraft] = useState<ReviewDraft>(() => { if (!restored || restored.reviewType !== "reward") return restored ?? newDraft(initialUniversityId); const standardDraft = { ...restored, reviewType: "standard" as const, photos: {} }; delete standardDraft.rewardReviewId; return standardDraft; });
+  const [step, setStep] = useState(1); const [errors, setErrors] = useState<FieldErrors>({});
+  const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false); const headingRef = useRef<HTMLHeadingElement>(null);
+  const inputClass = "field-control";
+  const totalScore = useMemo(() => { const values = Object.values(draft.ratings); return values.every(Boolean) ? Number((values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)) : 0; }, [draft.ratings]);
+  useEffect(() => { saveDraft(draft); }, [draft]);
   useEffect(() => { headingRef.current?.focus(); }, [step]);
 
-  function next() {
-    if (step === 1) {
-      const result = backgroundSchema.safeParse(draft);
-      if (!result.success) {
-        setErrors(toFieldErrors(result.error));
-        return;
-      }
-      if (universitySelection.status === "ready" && !draft.universityId) {
-        setErrors({ universityId: "Choose the university this review is about" });
-        return;
-      }
-    }
-    setErrors({});
-    setStep((current) => Math.min(3, current + 1));
+  function goNext() {
+    if (step === 1) { const result = backgroundSchema.safeParse(draft); if (!result.success || !draft.universityId) { setErrors({ ...toFieldErrors(result.error!), ...(!draft.universityId ? { universityId: "Choose an institution" } : {}) }); return; } }
+    if (step === 2 && Object.values(draft.ratings).some((value) => value < 1)) { setMessage("Score all eight areas before continuing."); return; }
+    if (step === 3 && wordCount(draft.spillTheTea) < 30) { setMessage("Your main experience needs at least 30 words."); return; }
+    setErrors({}); setMessage(""); setStep((value) => Math.min(5, value + 1));
   }
 
   async function submit() {
     const result = finalReviewSchema.safeParse(draft);
-    if (!result.success) {
-      setErrors(toFieldErrors(result.error));
-      return;
-    }
-    if (!draft.isAnonymous && !identity) {
-      setFormError("Sign in before attaching your identity to this review.");
-      onRequireAuth();
-      return;
-    }
-
-    setIsSubmitting(true);
-    const saved = await onSubmit(identity ? { ...draft, identity } : draft);
-    setIsSubmitting(false);
-    if (!saved.ok) {
-      setFormError(saved.message);
-      return;
-    }
-    setErrors({});
-    setSubmissionStatus(saved.status);
-    setStep(4);
+    if (!result.success) { setErrors(toFieldErrors(result.error)); setMessage("Check the declarations and written review before submitting."); return; }
+    if (!identity) { setMessage("Sign in to submit. Your draft is saved and will still be here when you return."); onRequireAuth(); return; }
+    setBusy(true); const response = await onSubmit({ ...draft, reviewType: "standard", rating: totalScore, identity }); setBusy(false);
+    if (!response.ok) { setMessage(response.message); return; }
+    clearDraft(); setStep(6);
   }
 
-  const inputClass = "mt-2 w-full rounded-xl border border-sea-fog bg-white px-3.5 py-3 text-sm focus:border-tidal-teal focus:outline-none";
-
   return (
-    <ModalShell titleId="review-wizard-title" onClose={onClose}>
-      <div className="border-b border-sea-fog bg-ice-tint px-6 py-5 pr-16 sm:px-8">
-        <p className="text-xs font-bold uppercase tracking-widest text-tidal-teal">Student voice · {step === 4 ? "Complete" : `Step ${step} of 3`}</p>
-        <h2 ref={headingRef} tabIndex={-1} id="review-wizard-title" className="mt-1 font-display text-2xl outline-none">Write a Review</h2>
-        {step < 4 ? <div className="mt-4 grid grid-cols-3 gap-2" aria-hidden="true">{[1, 2, 3].map((item) => <span key={item} className={`h-1.5 rounded-full ${item <= step ? "bg-tidal-teal" : "bg-sea-fog"}`} />)}</div> : null}
-      </div>
-
-      <div className="max-h-[70vh] overflow-y-auto px-6 py-6 sm:px-8">
-        {step === 1 ? (
-          <div className="space-y-5">
-            <div><p className="text-sm font-bold text-tidal-teal">01 — Your background</p><h3 className="mt-1 font-display text-xl">Give your take some context.</h3></div>
-            {universitySelection.status === "loading" ? <p className="rounded-xl bg-ice-tint p-3 text-sm text-slate-600" role="status">Loading universities for moderation…</p> : null}
-            {universitySelection.status === "ready" ? (
-              <div>
-                <label htmlFor="review-university" className="block text-sm font-bold">University</label>
-                <select id="review-university" value={draft.universityId ?? ""} onChange={(event) => setDraft((current) => {
-                  const universityId = event.target.value;
-                  if (universityId) return { ...current, universityId };
-                  const withoutUniversity = { ...current };
-                  delete withoutUniversity.universityId;
-                  return withoutUniversity;
-                })} className={inputClass} aria-invalid={Boolean(errors.universityId)} aria-describedby={errors.universityId ? "university-error" : undefined}>
-                  <option value="">Choose a university</option>
-                  {universitySelection.targets.map((university) => <option key={university.id} value={university.id}>{university.name}{university.location ? ` — ${university.location}` : ""}</option>)}
-                </select>
-                {errors.universityId ? <span id="university-error" className="mt-1 block text-sm font-medium text-red-700">{errors.universityId}</span> : null}
-              </div>
-            ) : <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="status">{universitySelection.message ?? "University selection is unavailable. This review can be saved only on this device."}</p>}
-            <div><label htmlFor="review-course" className="block text-sm font-bold">Course or major</label><input id="review-course" value={draft.course} onChange={(event) => setDraft({ ...draft, course: event.target.value })} className={inputClass} aria-invalid={Boolean(errors.course)} aria-describedby={errors.course ? "course-error" : undefined} />{errors.course ? <span id="course-error" className="mt-1 block text-sm font-medium text-red-700">{errors.course}</span> : null}</div>
-            <div><label htmlFor="review-year" className="block text-sm font-bold">Year of study</label><select id="review-year" value={draft.year} onChange={(event) => setDraft({ ...draft, year: event.target.value as StudyYear | "" })} className={inputClass} aria-invalid={Boolean(errors.year)} aria-describedby={errors.year ? "year-error" : undefined}><option value="">Choose your year</option>{STUDY_YEARS.map((year) => <option key={year}>{year}</option>)}</select>{errors.year ? <span id="year-error" className="mt-1 block text-sm font-medium text-red-700">{errors.year}</span> : null}</div>
+    <main className="review-canvas">
+      <div className="review-shell">
+        <aside className="wizard-rail" aria-label="Review progress">
+          <p className="eyebrow text-sun-paper">INPOLOR FIELD NOTE</p>
+          <h1 className="mt-4 font-display text-4xl leading-none text-white">Your experience can change someone&apos;s decision.</h1>
+          <p className="mt-4 text-sm leading-6 text-white/70">Always anonymous. Every submission is screened and manually reviewed before publication.</p>
+          <ol className="mt-8 space-y-3">{["Background", "Eight ratings", "Daily experience", "Submission", "Review & submit"].map((label, index) => <li key={label} className={`wizard-step ${step === index + 1 ? "is-current" : step > index + 1 ? "is-done" : ""}`}><span>{step > index + 1 ? <Check size={15} /> : index + 1}</span>{label}</li>)}</ol>
+          <div className="reward-ticket"><ShieldCheck size={20} /><div><strong>Community review</strong><small>Every submission is reviewed before publication</small></div></div>
+        </aside>
+        <section className="wizard-content">
+          {step <= 5 ? <><div className="flex items-center justify-between"><p className="eyebrow">STEP {step} OF 5</p><span className="text-xs font-bold text-slate-500">Draft saved</span></div><div className="mt-3 h-1.5 bg-sea-fog"><div className="h-full bg-coral-note transition-all" style={{ width: `${step * 20}%` }} /></div></> : null}
+          <div className="wizard-body">
+            {step === 1 ? <div><h2 ref={headingRef} tabIndex={-1} className="wizard-title">Start with the facts.</h2><p className="wizard-lede">This context is public. Your name and account are never shown.</p><label className="field-label">Institution<select className={inputClass} value={draft.universityId ?? ""} onChange={(e) => setDraft({ ...draft, universityId: e.target.value })}><option value="">Choose an institution</option>{universities.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.location}</option>)}</select>{errors.universityId ? <small className="field-error">{errors.universityId}</small> : null}</label><label className="field-label">Course<input className={inputClass} value={draft.course} onChange={(e) => setDraft({ ...draft, course: e.target.value })} placeholder="Search or type your course" />{errors.course ? <small className="field-error">{errors.course}</small> : null}</label><label className="field-label">Calendar year studied<select className={inputClass} value={draft.year} onChange={(e) => setDraft({ ...draft, year: e.target.value })}><option value="">Choose a year</option>{STUDY_YEARS.map((year) => <option key={year}>{year}</option>)}</select>{errors.year ? <small className="field-error">{errors.year}</small> : null}</label></div> : null}
+            {step === 2 ? <div><h2 ref={headingRef} tabIndex={-1} className="wizard-title">Score the whole experience.</h2><p className="wizard-lede">All eight dimensions carry equal weight. Your calculated total is <strong>{totalScore || "—"}/10</strong>.</p><div className="rating-form">{RATING_DIMENSIONS.map(([key, label], index) => <label key={key}><span><b>{String(index + 1).padStart(2, "0")}</b>{label}</span><select aria-label={label} value={draft.ratings[key] || ""} onChange={(e) => setDraft({ ...draft, ratings: { ...draft.ratings, [key]: Number(e.target.value) } })}><option value="">—</option>{Array.from({ length: 10 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label>)}</div></div> : null}
+            {step === 3 ? <div><h2 ref={headingRef} tabIndex={-1} className="wizard-title">Write what brochures leave out.</h2><p className="wizard-lede">One substantive answer publishes as a standard review.</p><label className="field-label">Your main experience<textarea className={inputClass} rows={5} value={draft.spillTheTea} onChange={(e) => setDraft({ ...draft, spillTheTea: e.target.value })} placeholder="What should a future student genuinely know?" /><small>{wordCount(draft.spillTheTea)}/30 minimum words</small></label><div className="experience-grid">{EXPERIENCE_FIELDS.map(([key, label, hint]) => <label className="field-label" key={key}>{label}<textarea className={inputClass} rows={3} value={draft.experiences[key] ?? ""} onChange={(e) => setDraft({ ...draft, experiences: { ...draft.experiences, [key]: e.target.value } })} placeholder={hint} /></label>)}</div><label className="field-label">Estimated monthly living cost (RM)<input className={inputClass} type="number" min="300" max="10000" value={draft.livingCost ?? ""} onChange={(e) => { const value = Number(e.target.value); if (value) setDraft({ ...draft, livingCost: value }); else { const next = { ...draft }; delete next.livingCost; setDraft(next); } }} placeholder="e.g. 1650" /></label></div> : null}
+            {step === 4 ? <div><h2 ref={headingRef} tabIndex={-1} className="wizard-title">Your review matters.</h2><p className="wizard-lede">Submit a complete standard review to help future students. There is no cash reward or photo requirement during this launch.</p><div className="notice-card"><ShieldCheck /><p><strong>Review for the community.</strong><br />Your review remains anonymous and is published only after manual moderation.</p></div></div> : null}
+            {step === 5 ? <div><h2 ref={headingRef} tabIndex={-1} className="wizard-title">Anonymous by design.</h2><p className="wizard-lede">Review the essentials and confirm before your submission enters moderation.</p><div className="review-summary"><div><span>Institution</span><strong>{universities.find((item) => item.id === draft.universityId)?.name}</strong></div><div><span>Course · year</span><strong>{draft.course} · {draft.year}</strong></div><div><span>Total rating</span><strong>{totalScore}/10</strong></div><div><span>Contribution</span><strong>Standard review</strong></div></div><fieldset className="declarations"><legend>Required confirmations</legend>{([ ["terms", "I agree to the Terms of Use."], ["privacy", "I acknowledge the Privacy Notice and automated safety processing."], ["age", "I confirm I am 18 years old or older."], ["rights", "This content is mine to submit and safe for anonymous publication."] ] as const).map(([key, label]) => <label key={key}><input type="checkbox" checked={draft.declarations[key]} onChange={(e) => setDraft({ ...draft, declarations: { ...draft.declarations, [key]: e.target.checked } })} />{label}</label>)}</fieldset><div className="notice-card"><ShieldCheck /><p><strong>Your public identity stays anonymous.</strong><br />Course and study year are the only contributor context shown.</p></div></div> : null}
+            {step === 6 ? <div className="py-12 text-center"><div className="success-mark"><Check /></div><h2 ref={headingRef} tabIndex={-1} className="wizard-title mt-6">Submitted for moderation.</h2><p className="wizard-lede mx-auto max-w-lg">Your review is not public yet. Track its status in My reviews. Full contributions now unlock Unspoken Truths across INPOLOR.</p><a href="/account/reviews" className="button-primary mt-6 inline-flex">View my reviews</a></div> : null}
+            {message ? <p className="form-alert" role="alert">{message}</p> : null}
           </div>
-        ) : null}
-
-        {step === 2 ? <div className="space-y-5"><div><p className="text-sm font-bold text-tidal-teal">02 — The honest bits</p><h3 className="mt-1 font-display text-xl">What helped—and what didn&apos;t?</h3></div><label className="block text-sm font-bold">Green flags<textarea rows={3} value={draft.greenFlags} onChange={(event) => setDraft({ ...draft, greenFlags: event.target.value })} className={inputClass} placeholder="Lecturers, facilities, opportunities…" maxLength={500} /></label><label className="block text-sm font-bold">Red flags<textarea rows={3} value={draft.redFlags} onChange={(event) => setDraft({ ...draft, redFlags: event.target.value })} className={inputClass} placeholder="Workload, costs, campus friction…" maxLength={500} /></label></div> : null}
-
-        {step === 3 ? <div className="space-y-5"><div><p className="text-sm font-bold text-tidal-teal">03 — Your verdict</p><h3 className="mt-1 font-display text-xl">Rate it, tag it, spill it.</h3></div><div><span className="text-sm font-bold">Overall rating</span><StarRating value={draft.rating} onChange={(rating) => setDraft({ ...draft, rating })} />{errors.rating ? <span className="block text-sm font-medium text-red-700">{errors.rating}</span> : null}</div><div><label htmlFor="spill-the-tea" className="block text-sm font-bold">Spill the tea</label><textarea id="spill-the-tea" rows={5} value={draft.spillTheTea} onChange={(event) => setDraft({ ...draft, spillTheTea: event.target.value })} className={inputClass} maxLength={1500} aria-invalid={Boolean(errors.spillTheTea)} aria-describedby="spill-help" />{errors.spillTheTea ? <span id="spill-help" className="mt-1 block text-sm font-medium text-red-700">{errors.spillTheTea}</span> : <span id="spill-help" className="mt-1 block text-xs text-slate-500">Minimum 20 characters. Keep it candid and constructive.</span>}</div><fieldset><legend className="text-sm font-bold">Campus vibe</legend><div className="mt-2 flex flex-wrap gap-2">{VIBE_TAGS.map((tag) => { const selected = draft.vibeTags.includes(tag); return <button key={tag} type="button" aria-pressed={selected} onClick={() => setDraft({ ...draft, vibeTags: selected ? draft.vibeTags.filter((item) => item !== tag) : [...draft.vibeTags, tag].slice(0, 5) })} className={`rounded-full border px-3 py-1.5 text-sm font-bold ${selected ? "border-midnight-harbor bg-midnight-harbor text-white" : "border-sea-fog"}`}>{selected ? <Check className="mr-1 inline" size={14} aria-hidden="true" /> : null}{tag}</button>; })}</div></fieldset><label className="flex items-start gap-3 rounded-xl bg-ice-tint p-4"><input type="checkbox" checked={draft.isAnonymous} onChange={(event) => setDraft({ ...draft, isAnonymous: event.target.checked })} className="mt-1 size-4 accent-tidal-teal" /><span><strong className="flex items-center gap-1.5 text-sm"><ShieldCheck size={16} aria-hidden="true" /> Post anonymously</strong><span className="mt-1 block text-xs text-slate-600">Your email and user ID are never sent in the review payload.</span></span></label></div> : null}
-
-        {step === 4 ? <div className="py-8 text-center"><div className="mx-auto grid size-16 place-items-center rounded-full bg-mint-signal text-midnight-harbor"><PartyPopper size={30} aria-hidden="true" /></div><h3 className="mt-5 font-display text-3xl">{submissionStatus === "submitted" ? "Your review was submitted for moderation." : "Your review is saved on this device."}</h3><p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-slate-600">{submissionStatus === "submitted" ? "It is not public yet. It will appear only after moderation publishes it." : "It was not sent for public moderation. You can try again after university selection is available."}</p><button type="button" onClick={onClose} className="mt-7 rounded-full bg-midnight-harbor px-6 py-3 font-bold text-white">Close</button></div> : null}
-
-        {formError ? <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-800" role="alert">{formError}</p> : null}
-        {step < 4 ? <div className="mt-7 flex justify-between border-t border-sea-fog pt-5">{step > 1 ? <button type="button" onClick={() => setStep(step - 1)} className="flex items-center gap-1 rounded-full px-4 py-2.5 font-bold text-deep-current"><ChevronLeft size={18} aria-hidden="true" /> Back</button> : <span />}{step < 3 ? <button type="button" onClick={next} className="flex items-center gap-1 rounded-full bg-midnight-harbor px-5 py-2.5 text-white">Next <ChevronRight aria-hidden="true" size={18} /></button> : <button type="button" disabled={isSubmitting} onClick={() => void submit()} className="rounded-full bg-mint-signal px-6 py-2.5 font-bold text-midnight-harbor disabled:opacity-60">{isSubmitting ? "Saving…" : "Submit review"}</button>}</div> : null}
+          {step <= 5 ? <footer className="wizard-actions">{step > 1 ? <button type="button" className="button-ghost" onClick={() => setStep(step - 1)}><ArrowLeft size={18} />Back</button> : <a className="button-ghost" href="/">Cancel</a>}{step < 5 ? <button type="button" className="button-primary" onClick={goNext}>Continue<ArrowRight size={18} /></button> : <button type="button" className="button-primary" disabled={busy} onClick={() => void submit()}>{busy ? "Submitting…" : identity ? "Submit for review" : "Sign in & submit"}<ArrowRight size={18} /></button>}</footer> : null}
+        </section>
       </div>
-    </ModalShell>
+    </main>
   );
 }

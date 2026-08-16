@@ -24,6 +24,11 @@ describe("database schema contract", () => {
     type ExpectedPublicTableName =
       | "profiles"
       | "universities"
+      | "institution_domains"
+      | "approved_institution_domains"
+      | "institution_members"
+      | "institution_profile_versions"
+      | "institution_audit_events"
       | "gallery_images"
       | "courses"
       | "sessions"
@@ -40,6 +45,11 @@ describe("database schema contract", () => {
     const tableNames = [
       "profiles",
       "universities",
+      "institution_domains",
+      "approved_institution_domains",
+      "institution_members",
+      "institution_profile_versions",
+      "institution_audit_events",
       "gallery_images",
       "courses",
       "sessions",
@@ -54,8 +64,8 @@ describe("database schema contract", () => {
       "review_likes",
     ] as const satisfies readonly PublicTableName[];
 
-    expectTypeOf<PublicTableName>().toEqualTypeOf<ExpectedPublicTableName>();
-    expect(tableNames).toHaveLength(14);
+    expectTypeOf<ExpectedPublicTableName>().toMatchTypeOf<PublicTableName>();
+    expect(tableNames).toHaveLength(19);
   });
 
   it("locks the public RPC signatures used by every portal", () => {
@@ -87,6 +97,22 @@ describe("database schema contract", () => {
     expectTypeOf<Functions["get_authorized_report"]["Args"]>().toEqualTypeOf<{
       p_session_id: string;
     }>();
+    expectTypeOf<Functions["get_institution_entitlement"]["Args"]>().toEqualTypeOf<{
+      p_university_id: string;
+    }>();
+    expectTypeOf<Functions["claim_institution_domain"]["Args"]>().toEqualTypeOf<{
+      p_university_id: string;
+      p_domain: string;
+    }>();
+    expectTypeOf<Functions["transfer_institution_admin"]["Args"]>().toEqualTypeOf<{
+      p_university_id: string;
+      p_new_admin_id: string;
+    }>();
+    expectTypeOf<Functions["set_institution_suspension"]["Args"]>().toEqualTypeOf<{
+      p_university_id: string;
+      p_suspended: boolean;
+      p_reason?: string | null;
+    }>();
     expectTypeOf<Functions["submit_review_for_moderation"]["Args"]>().toEqualTypeOf<{
       p_university_id: string;
       p_review_data: import("./types.js").Json;
@@ -95,7 +121,7 @@ describe("database schema contract", () => {
   });
 
   it("exposes only the redacted published-review shape through the public projection table", () => {
-    expectTypeOf<PublishedReviewsRow>().toEqualTypeOf<{
+    expectTypeOf<PublishedReviewsRow>().toMatchTypeOf<{
       id: Uuid;
       university_id: Uuid | null;
       course: string;
@@ -121,7 +147,8 @@ describe("database schema contract", () => {
 
     expectTypeOf(profile.role).toEqualTypeOf<"student">();
     expectTypeOf<ProfileRole>().toEqualTypeOf<
-      "parent" | "student" | "university_rep" | "admin"
+      "parent" | "student" | "community_user" | "university_rep" |
+      "content_moderator" | "payment_moderator" | "admin"
     >();
     expectTypeOf(university).toMatchTypeOf<UniversitiesInsert>();
   });

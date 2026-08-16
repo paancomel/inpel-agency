@@ -1,51 +1,20 @@
-import type { Review } from "./types";
+import type { Ratings, University } from "./types";
 
-export const SEED_REVIEWS: Review[] = [
-  {
-    id: "seed-aisha",
-    course: "Computer Science",
-    year: "Year 3",
-    rating: 5,
-    greenFlags: "Industry-led projects and lecturers who answer after class.",
-    redFlags: "Prime parking disappears before the 9am lecture rush.",
-    spillTheTea: "The workload gets real in semester two, but the group projects actually mirror how product teams work. I left with a portfolio, not just a transcript.",
-    vibeTags: ["Career-ready", "Collaborative", "Fast-paced"],
-    isAnonymous: false,
-    authorLabel: "Community member · Year 3",
-    createdAt: "2026-07-12T09:30:00.000Z",
-    likesCount: 84,
-    comments: [
-      { id: "comment-1", authorLabel: "Community member", text: "The parking detail is painfully accurate." },
-    ],
-  },
-  {
-    id: "seed-business",
-    course: "International Business",
-    year: "Year 2",
-    rating: 4,
-    greenFlags: "A genuinely international cohort and strong case competitions.",
-    redFlags: "Some large lecture sections feel impersonal.",
-    spillTheTea: "You get the most value when you join a society early. The people I met there led to two competition trips and my current internship.",
-    vibeTags: ["Global", "Social", "Opportunity-rich"],
-    isAnonymous: true,
-    authorLabel: "Anonymous community member",
-    createdAt: "2026-07-09T14:15:00.000Z",
-    likesCount: 51,
-    comments: [],
-  },
-  {
-    id: "seed-design",
-    course: "Mass Communication",
-    year: "Year 4",
-    rating: 4,
-    greenFlags: "Great production facilities and lecturers with newsroom experience.",
-    redFlags: "Equipment booking gets competitive around final projects.",
-    spillTheTea: "Ask seniors which electives have the best briefs. A good lecturer turns one module into a portfolio piece you can talk about for years.",
-    vibeTags: ["Creative", "Hands-on", "Portfolio-first"],
-    isAnonymous: true,
-    authorLabel: "Anonymous community member",
-    createdAt: "2026-07-05T03:20:00.000Z",
-    likesCount: 37,
-    comments: [],
-  },
-];
+const names = [
+  ["taylors", "Taylor's University", "Subang Jaya", "TU"], ["sunway", "Sunway University", "Bandar Sunway", "SU"],
+  ["apu", "Asia Pacific University", "Bukit Jalil", "APU"], ["help", "HELP University", "Subang Bestari", "HELP"],
+  ["ucsi", "UCSI University", "Cheras", "UCSI"], ["segi", "SEGi University", "Kota Damansara", "SEGi"],
+  ["mmu", "Multimedia University", "Cyberjaya", "MMU"], ["uniten", "Universiti Tenaga Nasional", "Kajang", "UNITEN"],
+  ["imu", "IMU University", "Bukit Jalil", "IMU"], ["inti", "INTI International College", "Subang Jaya", "INTI"],
+  ["monash", "Monash University Malaysia", "Bandar Sunway", "Monash"], ["nottingham", "University of Nottingham Malaysia", "Semenyih", "UNM"],
+  ["mahsa", "MAHSA University", "Jenjarom", "MAHSA"], ["msu", "Management & Science University", "Shah Alam", "MSU"],
+  ["iukl", "Infrastructure University Kuala Lumpur", "Kajang", "IUKL"], ["unisel", "Universiti Selangor", "Shah Alam", "UNISEL"],
+  ["bac", "Brickfields Asia College", "Kuala Lumpur", "BAC"], ["berjaya", "BERJAYA University College", "Bukit Bintang", "BUC"],
+  ["first-city", "First City University College", "Bandar Utama", "FCUC"], ["limkokwing", "Limkokwing University", "Cyberjaya", "LUCT"],
+] as const;
+
+const score = (base: number): Ratings => ({ facilities: base, teaching: Math.max(1, base - .3), classes: Math.max(1, base - .5), safety: Math.min(10, base + .4), value: Math.max(1, base - .7), transport: Math.min(10, base + .2), campusLife: Math.min(10, base + .5), career: Math.min(10, base + .1) });
+
+export const UNIVERSITIES: University[] = names.map(([id, name, location, shortName], index) => {
+  return { id, name, location, shortName, type: index % 4 === 1 ? "University college" : "Private university", address: `${location}, Kuala Lumpur & Selangor`, website: "", mapUrl: `https://maps.google.com/?q=${encodeURIComponent(name)}`, rating: 0, ratings: score(0), reviewCount: 0, latestReviewAt: "", courses: [], strengths: [], weaknesses: [] };
+});

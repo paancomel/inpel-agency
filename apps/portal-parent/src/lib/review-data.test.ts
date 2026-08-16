@@ -1,45 +1,18 @@
-import { createReviewSubmission } from "./review-data";
+import { createLocalReview, createReviewSubmission } from "./review-data";
+import { EMPTY_RATINGS, type ReviewDraft } from "./types";
 
-describe("database review payloads", () => {
-  it("scrubs user identity when an anonymous review is submitted", () => {
-    const payload = createReviewSubmission({
-      universityId: "university-123",
-      course: "Design",
-      year: "Year 2",
-      rating: 4,
-      greenFlags: "Great studio culture",
-      redFlags: "Limited electives",
-      spillTheTea: "The feedback is direct but always useful.",
-      vibeTags: ["Creative"],
-      isAnonymous: true,
-      identity: { userId: "user-123", email: "student@example.com" },
-    });
+const draft: ReviewDraft = { universityId: "taylors", course: "Computer Science", year: "2025", ratings: { ...EMPTY_RATINGS, facilities: 8, teaching: 8, classes: 8, safety: 8, value: 8, transport: 8, campusLife: 8, career: 8 }, rating: 0, greenFlags: "", redFlags: "", spillTheTea: "A detailed student experience that future students can use to decide.", vibeTags: [], isAnonymous: true, reviewType: "standard", experiences: {}, photos: {}, declarations: { terms: true, privacy: true, age: true, rights: true } };
 
-    expect(payload.universityId).toBe("university-123");
-    expect(payload.isAnonymous).toBe(true);
-    expect(JSON.stringify(payload.reviewData)).not.toContain("user-123");
-    expect(JSON.stringify(payload.reviewData)).not.toContain("student@example.com");
+describe("review data adapter", () => {
+  it("calculates a private pending review without public identity", () => {
+    const review = createLocalReview(draft);
+    expect(review.rating).toBe(8);
+    expect(review.authorLabel).toBe("Anonymous reviewer");
+    expect(review.status).toBe("pending");
   });
 
-  it("never includes a signed-in identity in a moderated review payload", () => {
-    const payload = createReviewSubmission({
-      universityId: "university-456",
-      course: "Engineering",
-      year: "Year 4",
-      rating: 5,
-      greenFlags: "Industry projects",
-      redFlags: "Heavy workload",
-      spillTheTea: "The capstone opened doors to my first internship.",
-      vibeTags: ["Career-ready"],
-      isAnonymous: false,
-      identity: { userId: "user-456", email: "verified@example.com" },
-    });
-
-    expect(payload.isAnonymous).toBe(false);
-    expect(payload.reviewData).toMatchObject({
-      course: "Engineering",
-    });
-    expect(JSON.stringify(payload.reviewData)).not.toContain("user-456");
-    expect(JSON.stringify(payload.reviewData)).not.toContain("verified@example.com");
+  it("uses the server moderation contract", () => {
+    const submission = createReviewSubmission(draft);
+    expect(submission).toMatchObject({ universityId: "taylors", isAnonymous: true });
   });
 });

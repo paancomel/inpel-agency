@@ -9,13 +9,46 @@ export type Json =
 
 export type Uuid = string;
 export type Timestamp = string;
-export type ProfileRole = "parent" | "student" | "university_rep" | "admin";
+export type ProfileRole =
+  | "parent"
+  | "student"
+  | "community_user"
+  | "university_rep"
+  | "content_moderator"
+  | "payment_moderator"
+  | "admin";
 export type SessionStatus = "invited" | "completed";
 export type SessionStudentBindingStatus = "issued" | "claimed" | "expired" | "revoked";
 export type ReportAccessGrantKind = "demo";
 export type ReportAccessGrantStatus = "active" | "revoked";
-export type ModerationStatus = "pending" | "published" | "rejected" | "removed";
+export type ModerationStatus =
+  | "draft"
+  | "submitted"
+  | "pending"
+  | "needs_correction"
+  | "published"
+  | "rejected"
+  | "hidden_under_review"
+  | "removed";
+export type InpolorLocale = "en" | "ms";
+export type InpolorReviewKind = "standard" | "reward";
+export type InpolorPhotoCategory =
+  | "class" | "library" | "affordable_food" | "daily_route"
+  | "campus" | "accommodation" | "hangout" | "nearby_activity";
+export type InpolorVisibilityStatus = "published" | "hidden_under_review";
+export type InpolorAnswerLabel =
+  | "approved_reviewer" | "current_student" | "alumni" | "community_member";
+export type InpolorRewardStatus =
+  | "waiting_for_payment" | "needs_action" | "eligible"
+  | "paid" | "ineligible" | "payment_problem";
 export type PaymentStatus = "pending" | "success" | "failed";
+export type InstitutionVerificationStatus = "unverified" | "verified" | "suspended";
+export type InstitutionProfileStatus = "incomplete" | "complete";
+export type InstitutionMemberRole = "representative" | "admin";
+export type InstitutionMemberStatus = "active" | "removed";
+export type InstitutionDomainStatus = "approved" | "suspended";
+export type InstitutionDomainSource = "institution" | "manual_exception";
+export type InstitutionVersionSource = "manual" | "import" | "restore" | "system";
 
 /** Structured portal values persisted in JSONB/text columns. */
 export type MalaysianStudyLocation =
@@ -75,6 +108,9 @@ export interface ProfilesRow {
   role: ProfileRole;
   has_unlocked_tea: boolean | null;
   created_at: Timestamp | null;
+  date_of_birth: string | null;
+  preferred_locale: InpolorLocale;
+  updated_at: Timestamp;
 }
 
 export interface ProfilesInsert {
@@ -83,6 +119,9 @@ export interface ProfilesInsert {
   role: ProfileRole;
   has_unlocked_tea?: boolean | null;
   created_at?: Timestamp | null;
+  date_of_birth?: string | null;
+  preferred_locale?: InpolorLocale;
+  updated_at?: Timestamp;
 }
 
 export type ProfilesUpdate = Partial<ProfilesInsert>;
@@ -100,6 +139,12 @@ export interface UniversitiesRow {
   facilities_flags: Json | null;
   contacts: Json | null;
   created_at: Timestamp | null;
+  verification_status: InstitutionVerificationStatus;
+  profile_status: InstitutionProfileStatus;
+  is_suspended: boolean;
+  primary_admin_id: Uuid | null;
+  published_version: number;
+  updated_at: Timestamp;
 }
 
 export interface UniversitiesInsert {
@@ -115,9 +160,115 @@ export interface UniversitiesInsert {
   facilities_flags?: Json | null;
   contacts?: Json | null;
   created_at?: Timestamp | null;
+  verification_status?: InstitutionVerificationStatus;
+  profile_status?: InstitutionProfileStatus;
+  is_suspended?: boolean;
+  primary_admin_id?: Uuid | null;
+  published_version?: number;
+  updated_at?: Timestamp;
 }
 
 export type UniversitiesUpdate = Partial<UniversitiesInsert>;
+
+export interface InstitutionDomainsRow {
+  id: Uuid;
+  university_id: Uuid;
+  domain: string;
+  status: InstitutionDomainStatus;
+  source: InstitutionDomainSource;
+  verified_at: Timestamp | null;
+  suspended_at: Timestamp | null;
+  created_by: Uuid | null;
+  created_at: Timestamp;
+}
+export interface InstitutionDomainsInsert {
+  id?: Uuid;
+  university_id: Uuid;
+  domain: string;
+  status?: InstitutionDomainStatus;
+  source?: InstitutionDomainSource;
+  verified_at?: Timestamp | null;
+  suspended_at?: Timestamp | null;
+  created_by?: Uuid | null;
+  created_at?: Timestamp;
+}
+export type InstitutionDomainsUpdate = Partial<InstitutionDomainsInsert>;
+
+export interface ApprovedInstitutionDomainsRow {
+  domain: string;
+  university_id: Uuid | null;
+  status: InstitutionDomainStatus;
+  notes: string | null;
+  created_by: Uuid | null;
+  created_at: Timestamp;
+}
+export interface ApprovedInstitutionDomainsInsert {
+  domain: string;
+  university_id?: Uuid | null;
+  status?: InstitutionDomainStatus;
+  notes?: string | null;
+  created_by?: Uuid | null;
+  created_at?: Timestamp;
+}
+export type ApprovedInstitutionDomainsUpdate = Partial<ApprovedInstitutionDomainsInsert>;
+
+export interface InstitutionMembersRow {
+  university_id: Uuid;
+  user_id: Uuid;
+  role: InstitutionMemberRole;
+  status: InstitutionMemberStatus;
+  invited_by: Uuid | null;
+  joined_at: Timestamp;
+  removed_at: Timestamp | null;
+}
+export interface InstitutionMembersInsert {
+  university_id: Uuid;
+  user_id: Uuid;
+  role?: InstitutionMemberRole;
+  status?: InstitutionMemberStatus;
+  invited_by?: Uuid | null;
+  joined_at?: Timestamp;
+  removed_at?: Timestamp | null;
+}
+export type InstitutionMembersUpdate = Partial<InstitutionMembersInsert>;
+
+export interface InstitutionProfileVersionsRow {
+  id: Uuid;
+  university_id: Uuid;
+  version_number: number;
+  snapshot: Json;
+  source: InstitutionVersionSource;
+  changed_by: Uuid | null;
+  created_at: Timestamp;
+}
+export interface InstitutionProfileVersionsInsert {
+  id?: Uuid;
+  university_id: Uuid;
+  version_number: number;
+  snapshot: Json;
+  source?: InstitutionVersionSource;
+  changed_by?: Uuid | null;
+  created_at?: Timestamp;
+}
+export type InstitutionProfileVersionsUpdate = Partial<InstitutionProfileVersionsInsert>;
+
+export interface InstitutionAuditEventsRow {
+  id: Uuid;
+  university_id: Uuid | null;
+  actor_id: Uuid | null;
+  event_type: string;
+  payload: Json;
+  created_at: Timestamp;
+}
+export interface InstitutionAuditEventsInsert {
+  id?: Uuid;
+  university_id?: Uuid | null;
+  actor_id?: Uuid | null;
+  event_type: string;
+  payload?: Json;
+  created_at?: Timestamp;
+}
+export type InstitutionAuditEventsUpdate = Partial<InstitutionAuditEventsInsert>;
 
 export interface GalleryImagesRow {
   id: Uuid;
@@ -304,6 +455,27 @@ export interface ReviewsRow {
   likes_count: number | null;
   created_at: Timestamp;
   status: ModerationStatus;
+  course_id: Uuid | null;
+  course_name: string | null;
+  study_year: number | null;
+  review_kind: InpolorReviewKind;
+  rating_facilities: number | null;
+  rating_teaching: number | null;
+  rating_class_experience: number | null;
+  rating_safety: number | null;
+  rating_value: number | null;
+  rating_transport: number | null;
+  rating_campus_life: number | null;
+  rating_career: number | null;
+  overall_rating: number | null;
+  living_cost_monthly: number | null;
+  is_complete_review: boolean;
+  current_version: number;
+  acquisition_source: string | null;
+  acquisition_campaign: string | null;
+  submitted_at: Timestamp | null;
+  published_at: Timestamp | null;
+  updated_at: Timestamp;
 }
 
 export interface ReviewsInsert {
@@ -315,6 +487,27 @@ export interface ReviewsInsert {
   likes_count?: number | null;
   created_at?: Timestamp;
   status?: ModerationStatus;
+  course_id?: Uuid | null;
+  course_name?: string | null;
+  study_year?: number | null;
+  review_kind?: InpolorReviewKind;
+  rating_facilities?: number | null;
+  rating_teaching?: number | null;
+  rating_class_experience?: number | null;
+  rating_safety?: number | null;
+  rating_value?: number | null;
+  rating_transport?: number | null;
+  rating_campus_life?: number | null;
+  rating_career?: number | null;
+  overall_rating?: never;
+  living_cost_monthly?: number | null;
+  is_complete_review?: boolean;
+  current_version?: number;
+  acquisition_source?: string | null;
+  acquisition_campaign?: string | null;
+  submitted_at?: Timestamp | null;
+  published_at?: Timestamp | null;
+  updated_at?: Timestamp;
 }
 
 export type ReviewsUpdate = Partial<ReviewsInsert>;
@@ -333,6 +526,19 @@ export interface PublishedReviewsRow {
   is_anonymous: boolean;
   likes_count: number;
   created_at: Timestamp;
+  rating_facilities: number | null;
+  rating_teaching: number | null;
+  rating_class_experience: number | null;
+  rating_safety: number | null;
+  rating_value: number | null;
+  rating_transport: number | null;
+  rating_campus_life: number | null;
+  rating_career: number | null;
+  living_cost_monthly: number | null;
+  content: Json;
+  is_complete_review: boolean;
+  visibility_status: InpolorVisibilityStatus;
+  published_at: Timestamp | null;
 }
 
 export interface PublishedReviewsInsert {
@@ -348,6 +554,19 @@ export interface PublishedReviewsInsert {
   is_anonymous: boolean;
   likes_count?: number;
   created_at: Timestamp;
+  rating_facilities?: number | null;
+  rating_teaching?: number | null;
+  rating_class_experience?: number | null;
+  rating_safety?: number | null;
+  rating_value?: number | null;
+  rating_transport?: number | null;
+  rating_campus_life?: number | null;
+  rating_career?: number | null;
+  living_cost_monthly?: number | null;
+  content?: Json;
+  is_complete_review?: boolean;
+  visibility_status?: InpolorVisibilityStatus;
+  published_at?: Timestamp | null;
 }
 
 export type PublishedReviewsUpdate = Partial<PublishedReviewsInsert>;
@@ -359,6 +578,9 @@ export interface CommentsRow {
   text: string;
   created_at: Timestamp;
   status: ModerationStatus;
+  parent_comment_id: Uuid | null;
+  depth: number;
+  updated_at: Timestamp;
 }
 
 export interface CommentsInsert {
@@ -368,6 +590,9 @@ export interface CommentsInsert {
   text: string;
   created_at?: Timestamp;
   status?: ModerationStatus;
+  parent_comment_id?: Uuid | null;
+  depth?: number;
+  updated_at?: Timestamp;
 }
 
 export type CommentsUpdate = Partial<CommentsInsert>;
@@ -385,6 +610,64 @@ export interface ReviewLikesInsert {
 }
 
 export type ReviewLikesUpdate = Partial<ReviewLikesInsert>;
+
+export interface ReviewVersionsRow { id: Uuid; review_id: Uuid; version_number: number; payload: Json; status: "submitted" | "needs_correction" | "approved" | "rejected"; submitted_by: Uuid; moderator_note: string | null; created_at: Timestamp; decided_at: Timestamp | null; decided_by: Uuid | null }
+export interface ReviewVersionsInsert { id?: Uuid; review_id: Uuid; version_number: number; payload: Json; status?: ReviewVersionsRow["status"]; submitted_by: Uuid; moderator_note?: string | null; created_at?: Timestamp; decided_at?: Timestamp | null; decided_by?: Uuid | null }
+export type ReviewVersionsUpdate = Partial<ReviewVersionsInsert>;
+export interface ReviewPhotosRow { id: Uuid; review_id: Uuid; category: InpolorPhotoCategory; storage_path: string; mime_type: "image/jpeg" | "image/png" | "image/webp"; size_bytes: number; redaction_status: "pending" | "redacted" | "confirmed" | "rejected"; redaction_confirmed_at: Timestamp | null; quality_score: number | null; community_score: number; moderator_featured: boolean; sort_order: number; status: "pending" | InpolorVisibilityStatus | "rejected" | "removed"; created_at: Timestamp }
+export interface ReviewPhotosInsert extends Omit<ReviewPhotosRow, "id" | "redaction_confirmed_at" | "quality_score" | "community_score" | "moderator_featured" | "sort_order" | "status" | "created_at"> { id?: Uuid; redaction_confirmed_at?: Timestamp | null; quality_score?: number | null; community_score?: number; moderator_featured?: boolean; sort_order?: number; status?: ReviewPhotosRow["status"]; created_at?: Timestamp }
+export type ReviewPhotosUpdate = Partial<ReviewPhotosInsert>;
+export interface ModerationActionsRow { id: Uuid; content_type: string; content_id: Uuid; action: string; reason_code: string | null; note: string | null; actor_id: Uuid; created_at: Timestamp }
+export interface ModerationActionsInsert extends Omit<ModerationActionsRow, "id" | "reason_code" | "note" | "created_at"> { id?: Uuid; reason_code?: string | null; note?: string | null; created_at?: Timestamp }
+export type ModerationActionsUpdate = Partial<ModerationActionsInsert>;
+export interface ReviewUnspokenTruthsRow { id: Uuid; review_id: Uuid; review_version_id: Uuid | null; excerpt: string; topic: string; status: "candidate" | "approved" | "rejected" | "hidden_under_review"; classified_by: "automation" | "moderator"; decided_by: Uuid | null; decided_at: Timestamp | null; created_at: Timestamp }
+export interface ReviewUnspokenTruthsInsert extends Omit<ReviewUnspokenTruthsRow, "id" | "review_version_id" | "status" | "classified_by" | "decided_by" | "decided_at" | "created_at"> { id?: Uuid; review_version_id?: Uuid | null; status?: ReviewUnspokenTruthsRow["status"]; classified_by?: ReviewUnspokenTruthsRow["classified_by"]; decided_by?: Uuid | null; decided_at?: Timestamp | null; created_at?: Timestamp }
+export type ReviewUnspokenTruthsUpdate = Partial<ReviewUnspokenTruthsInsert>;
+export interface UniversityQuestionsRow { id: Uuid; university_id: Uuid; author_id: Uuid; body: string; status: Exclude<ModerationStatus, "draft" | "submitted" | "needs_correction">; created_at: Timestamp; updated_at: Timestamp }
+export interface UniversityQuestionsInsert extends Omit<UniversityQuestionsRow, "id" | "status" | "created_at" | "updated_at"> { id?: Uuid; status?: UniversityQuestionsRow["status"]; created_at?: Timestamp; updated_at?: Timestamp }
+export type UniversityQuestionsUpdate = Partial<UniversityQuestionsInsert>;
+export interface QuestionAnswersRow { id: Uuid; question_id: Uuid; author_id: Uuid; parent_answer_id: Uuid | null; depth: number; author_label: InpolorAnswerLabel; body: string; status: UniversityQuestionsRow["status"]; upvotes_count: number; created_at: Timestamp; updated_at: Timestamp }
+export interface QuestionAnswersInsert extends Omit<QuestionAnswersRow, "id" | "parent_answer_id" | "depth" | "author_label" | "status" | "upvotes_count" | "created_at" | "updated_at"> { id?: Uuid; parent_answer_id?: Uuid | null; depth?: number; author_label?: InpolorAnswerLabel; status?: QuestionAnswersRow["status"]; upvotes_count?: number; created_at?: Timestamp; updated_at?: Timestamp }
+export type QuestionAnswersUpdate = Partial<QuestionAnswersInsert>;
+export interface QuestionAnswerVotesRow { answer_id: Uuid; user_id: Uuid; created_at: Timestamp }
+export interface QuestionAnswerVotesInsert { answer_id: Uuid; user_id: Uuid; created_at?: Timestamp }
+export type QuestionAnswerVotesUpdate = Partial<QuestionAnswerVotesInsert>;
+export interface OfficialResponsesRow { id: Uuid; university_id: Uuid; author_id: Uuid; target_type: "profile" | "review" | "question"; target_id: Uuid | null; body: string; status: UniversityQuestionsRow["status"]; created_at: Timestamp; published_at: Timestamp | null }
+export interface OfficialResponsesInsert extends Omit<OfficialResponsesRow, "id" | "target_id" | "status" | "created_at" | "published_at"> { id?: Uuid; target_id?: Uuid | null; status?: OfficialResponsesRow["status"]; created_at?: Timestamp; published_at?: Timestamp | null }
+export type OfficialResponsesUpdate = Partial<OfficialResponsesInsert>;
+export interface ContentReportsRow { id: Uuid; reporter_id: Uuid; content_type: string; content_id: Uuid; reason_code: string; details: string | null; status: "received" | "under_review" | "action_taken" | "no_action"; created_at: Timestamp; resolved_at: Timestamp | null; resolved_by: Uuid | null }
+export interface ContentReportsInsert extends Omit<ContentReportsRow, "id" | "details" | "status" | "created_at" | "resolved_at" | "resolved_by"> { id?: Uuid; details?: string | null; status?: ContentReportsRow["status"]; created_at?: Timestamp; resolved_at?: Timestamp | null; resolved_by?: Uuid | null }
+export type ContentReportsUpdate = Partial<ContentReportsInsert>;
+export interface UserSaveRow { user_id: Uuid; created_at: Timestamp }
+export interface ReviewSavesRow extends UserSaveRow { review_id: Uuid }
+export interface ReviewSavesInsert { review_id: Uuid; user_id: Uuid; created_at?: Timestamp }
+export type ReviewSavesUpdate = Partial<ReviewSavesInsert>;
+export interface UniversitySavesRow extends UserSaveRow { university_id: Uuid }
+export interface UniversitySavesInsert { university_id: Uuid; user_id: Uuid; created_at?: Timestamp }
+export type UniversitySavesUpdate = Partial<UniversitySavesInsert>;
+export interface QuestionSavesRow extends UserSaveRow { question_id: Uuid }
+export interface QuestionSavesInsert { question_id: Uuid; user_id: Uuid; created_at?: Timestamp }
+export type QuestionSavesUpdate = Partial<QuestionSavesInsert>;
+export interface NotificationsRow { id: Uuid; user_id: Uuid; kind: string; title_key: string; body_key: string; data: Json; read_at: Timestamp | null; created_at: Timestamp }
+export interface NotificationsInsert extends Omit<NotificationsRow, "id" | "data" | "read_at" | "created_at"> { id?: Uuid; data?: Json; read_at?: Timestamp | null; created_at?: Timestamp }
+export type NotificationsUpdate = Partial<NotificationsInsert>;
+export interface RewardClaimStatusesRow { id: Uuid; user_id: Uuid; review_id: Uuid; status: InpolorRewardStatus; transaction_reference: string | null; submitted_at: Timestamp; paid_at: Timestamp | null; updated_at: Timestamp }
+export interface RewardClaimStatusesInsert extends Omit<RewardClaimStatusesRow, "transaction_reference" | "paid_at" | "updated_at"> { transaction_reference?: string | null; paid_at?: Timestamp | null; updated_at?: Timestamp }
+export type RewardClaimStatusesUpdate = Partial<RewardClaimStatusesInsert>;
+export interface PublishedReviewPhotosRow { id: Uuid; review_id: Uuid; university_id: Uuid; category: InpolorPhotoCategory; storage_path: string; quality_score: number | null; community_score: number; moderator_featured: boolean; sort_order: number; visibility_status: InpolorVisibilityStatus; created_at: Timestamp }
+export type PublishedReviewPhotosInsert = PublishedReviewPhotosRow; export type PublishedReviewPhotosUpdate = Partial<PublishedReviewPhotosRow>;
+export interface PublishedCommentsRow { id: Uuid; review_id: Uuid; parent_comment_id: Uuid | null; depth: number; text: string; visibility_status: InpolorVisibilityStatus; created_at: Timestamp }
+export type PublishedCommentsInsert = PublishedCommentsRow; export type PublishedCommentsUpdate = Partial<PublishedCommentsRow>;
+export interface PublishedQuestionsRow { id: Uuid; university_id: Uuid; body: string; visibility_status: InpolorVisibilityStatus; created_at: Timestamp }
+export type PublishedQuestionsInsert = PublishedQuestionsRow; export type PublishedQuestionsUpdate = Partial<PublishedQuestionsRow>;
+export interface PublishedQuestionAnswersRow { id: Uuid; question_id: Uuid; parent_answer_id: Uuid | null; depth: number; author_label: InpolorAnswerLabel; body: string; upvotes_count: number; visibility_status: InpolorVisibilityStatus; created_at: Timestamp }
+export type PublishedQuestionAnswersInsert = PublishedQuestionAnswersRow; export type PublishedQuestionAnswersUpdate = Partial<PublishedQuestionAnswersRow>;
+export interface PublishedOfficialResponsesRow { id: Uuid; university_id: Uuid; target_type: "profile" | "review" | "question"; target_id: Uuid | null; body: string; visibility_status: InpolorVisibilityStatus; published_at: Timestamp }
+export type PublishedOfficialResponsesInsert = PublishedOfficialResponsesRow; export type PublishedOfficialResponsesUpdate = Partial<PublishedOfficialResponsesRow>;
+export interface PublishedUnspokenTruthsRow { id: Uuid; review_id: Uuid; university_id: Uuid; topic: string; excerpt: string; created_at: Timestamp }
+export type PublishedUnspokenTruthsInsert = PublishedUnspokenTruthsRow; export type PublishedUnspokenTruthsUpdate = Partial<PublishedUnspokenTruthsRow>;
+export interface UnspokenTruthTeasersRow { id: Uuid; review_id: Uuid; university_id: Uuid; topic: string; created_at: Timestamp }
+export type UnspokenTruthTeasersInsert = UnspokenTruthTeasersRow; export type UnspokenTruthTeasersUpdate = Partial<UnspokenTruthTeasersRow>;
 
 /** Constraints that Supabase's generated TypeScript table shape cannot encode. */
 export const DATABASE_CONSTRAINTS = {
@@ -466,6 +749,75 @@ export interface Database {
         Insert: UniversitiesInsert;
         Update: UniversitiesUpdate;
         Relationships: [];
+      };
+      institution_domains: {
+        Row: InstitutionDomainsRow;
+        Insert: InstitutionDomainsInsert;
+        Update: InstitutionDomainsUpdate;
+        Relationships: [
+          {
+            foreignKeyName: "institution_domains_university_id_fkey";
+            columns: ["university_id"];
+            isOneToOne: false;
+            referencedRelation: "universities";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      approved_institution_domains: {
+        Row: ApprovedInstitutionDomainsRow;
+        Insert: ApprovedInstitutionDomainsInsert;
+        Update: ApprovedInstitutionDomainsUpdate;
+        Relationships: [];
+      };
+      institution_members: {
+        Row: InstitutionMembersRow;
+        Insert: InstitutionMembersInsert;
+        Update: InstitutionMembersUpdate;
+        Relationships: [
+          {
+            foreignKeyName: "institution_members_university_id_fkey";
+            columns: ["university_id"];
+            isOneToOne: false;
+            referencedRelation: "universities";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "institution_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      institution_profile_versions: {
+        Row: InstitutionProfileVersionsRow;
+        Insert: InstitutionProfileVersionsInsert;
+        Update: InstitutionProfileVersionsUpdate;
+        Relationships: [
+          {
+            foreignKeyName: "institution_profile_versions_university_id_fkey";
+            columns: ["university_id"];
+            isOneToOne: false;
+            referencedRelation: "universities";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      institution_audit_events: {
+        Row: InstitutionAuditEventsRow;
+        Insert: InstitutionAuditEventsInsert;
+        Update: InstitutionAuditEventsUpdate;
+        Relationships: [
+          {
+            foreignKeyName: "institution_audit_events_university_id_fkey";
+            columns: ["university_id"];
+            isOneToOne: false;
+            referencedRelation: "universities";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       gallery_images: {
         Row: GalleryImagesRow;
@@ -649,6 +1001,10 @@ export interface Database {
           },
         ];
       };
+      review_versions: { Row: ReviewVersionsRow; Insert: ReviewVersionsInsert; Update: ReviewVersionsUpdate; Relationships: [] };
+      review_photos: { Row: ReviewPhotosRow; Insert: ReviewPhotosInsert; Update: ReviewPhotosUpdate; Relationships: [] };
+      moderation_actions: { Row: ModerationActionsRow; Insert: ModerationActionsInsert; Update: ModerationActionsUpdate; Relationships: [] };
+      review_unspoken_truths: { Row: ReviewUnspokenTruthsRow; Insert: ReviewUnspokenTruthsInsert; Update: ReviewUnspokenTruthsUpdate; Relationships: [] };
       published_reviews: {
         Row: PublishedReviewsRow;
         Insert: PublishedReviewsInsert;
@@ -691,6 +1047,23 @@ export interface Database {
           },
         ];
       };
+      university_questions: { Row: UniversityQuestionsRow; Insert: UniversityQuestionsInsert; Update: UniversityQuestionsUpdate; Relationships: [] };
+      question_answers: { Row: QuestionAnswersRow; Insert: QuestionAnswersInsert; Update: QuestionAnswersUpdate; Relationships: [] };
+      question_answer_votes: { Row: QuestionAnswerVotesRow; Insert: QuestionAnswerVotesInsert; Update: QuestionAnswerVotesUpdate; Relationships: [] };
+      official_responses: { Row: OfficialResponsesRow; Insert: OfficialResponsesInsert; Update: OfficialResponsesUpdate; Relationships: [] };
+      content_reports: { Row: ContentReportsRow; Insert: ContentReportsInsert; Update: ContentReportsUpdate; Relationships: [] };
+      review_saves: { Row: ReviewSavesRow; Insert: ReviewSavesInsert; Update: ReviewSavesUpdate; Relationships: [] };
+      university_saves: { Row: UniversitySavesRow; Insert: UniversitySavesInsert; Update: UniversitySavesUpdate; Relationships: [] };
+      question_saves: { Row: QuestionSavesRow; Insert: QuestionSavesInsert; Update: QuestionSavesUpdate; Relationships: [] };
+      notifications: { Row: NotificationsRow; Insert: NotificationsInsert; Update: NotificationsUpdate; Relationships: [] };
+      reward_claim_statuses: { Row: RewardClaimStatusesRow; Insert: RewardClaimStatusesInsert; Update: RewardClaimStatusesUpdate; Relationships: [] };
+      published_review_photos: { Row: PublishedReviewPhotosRow; Insert: PublishedReviewPhotosInsert; Update: PublishedReviewPhotosUpdate; Relationships: [] };
+      published_comments: { Row: PublishedCommentsRow; Insert: PublishedCommentsInsert; Update: PublishedCommentsUpdate; Relationships: [] };
+      published_questions: { Row: PublishedQuestionsRow; Insert: PublishedQuestionsInsert; Update: PublishedQuestionsUpdate; Relationships: [] };
+      published_question_answers: { Row: PublishedQuestionAnswersRow; Insert: PublishedQuestionAnswersInsert; Update: PublishedQuestionAnswersUpdate; Relationships: [] };
+      published_official_responses: { Row: PublishedOfficialResponsesRow; Insert: PublishedOfficialResponsesInsert; Update: PublishedOfficialResponsesUpdate; Relationships: [] };
+      published_unspoken_truths: { Row: PublishedUnspokenTruthsRow; Insert: PublishedUnspokenTruthsInsert; Update: PublishedUnspokenTruthsUpdate; Relationships: [] };
+      unspoken_truth_teasers: { Row: UnspokenTruthTeasersRow; Insert: UnspokenTruthTeasersInsert; Update: UnspokenTruthTeasersUpdate; Relationships: [] };
       review_likes: {
         Row: ReviewLikesRow;
         Insert: ReviewLikesInsert;
@@ -713,7 +1086,27 @@ export interface Database {
         ];
       };
     };
-    Views: {};
+    Views: {
+      inpolor_university_summaries: {
+        Row: {
+          university_id: Uuid;
+          review_count: number;
+          overall_rating: number | null;
+          rating_facilities: number | null;
+          rating_teaching: number | null;
+          rating_class_experience: number | null;
+          rating_safety: number | null;
+          rating_value: number | null;
+          rating_transport: number | null;
+          rating_campus_life: number | null;
+          rating_career: number | null;
+          living_cost_monthly: number | null;
+          ranking_eligible: boolean;
+          newest_review_at: Timestamp | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       create_parent_student_invitation: {
         Args: {
@@ -751,12 +1144,68 @@ export interface Database {
         Args: { p_session_id: string };
         Returns: Json;
       };
+      get_institution_entitlement: {
+        Args: { p_university_id: string };
+        Returns: Json;
+      };
+      claim_institution_domain: {
+        Args: { p_university_id: string; p_domain: string };
+        Returns: Json;
+      };
+      transfer_institution_admin: {
+        Args: { p_university_id: string; p_new_admin_id: string };
+        Returns: Json;
+      };
+      set_institution_suspension: {
+        Args: { p_university_id: string; p_suspended: boolean; p_reason?: string | null };
+        Returns: Json;
+      };
+      set_institution_verification: {
+        Args: { p_university_id: Uuid; p_verification_status: "unverified" | "verified" | "suspended" };
+        Returns: Json;
+      };
       submit_review_for_moderation: {
         Args: {
           p_university_id: string;
           p_review_data: Json;
           p_is_anonymous: boolean;
         };
+        Returns: Json;
+      };
+      submit_inpolor_review: {
+        Args: { p_payload: Json };
+        Returns: Json;
+      };
+      complete_inpolor_community_onboarding: {
+        Args: { p_date_of_birth: string; p_locale?: InpolorLocale };
+        Returns: Json;
+      };
+      create_inpolor_reward_draft: {
+        Args: { p_university_id: Uuid };
+        Returns: Json;
+      };
+      submit_inpolor_reward_claim: {
+        Args: { p_review_id: Uuid; p_ewallet_number: string };
+        Returns: Json;
+      };
+      mark_inpolor_reward_paid: {
+        Args: { p_claim_id: Uuid; p_transaction_reference: string };
+        Returns: Json;
+      };
+      get_inpolor_payment_queue: {
+        Args: { p_limit?: number };
+        Returns: Json;
+      };
+      record_inpolor_reward_risk: {
+        Args: { p_review_id: Uuid; p_signal_type: string; p_signal_digest: string | null; p_score: number; p_metadata?: Json };
+        Returns: undefined;
+      };
+      moderate_inpolor_review: {
+        Args: { p_review_id: Uuid; p_action: "publish" | "request_correction" | "reject" | "hide" | "restore"; p_note?: string | null };
+        Returns: Json;
+      };
+      report_inpolor_content: {
+        Args: { p_content_type: string; p_content_id: Uuid; p_reason_code: string; p_details?: string | null };
         Returns: Json;
       };
     };
