@@ -2,7 +2,7 @@ begin;
 
 set local search_path = public, extensions;
 
-select plan(15);
+select plan(16);
 
 select is(
   coalesce((select reloptions @> array['security_invoker=true']
@@ -97,6 +97,20 @@ select ok(
     'public.moderate_inpolor_review(uuid,text,text)'::regprocedure
   )) > 0,
   'approved reviews unlock protected excerpts'
+);
+
+select ok(
+  exists (
+    select 1
+      from pg_trigger
+     where tgrelid = 'public.profiles'::regclass
+       and tgname = 'profiles_require_published_review_for_unlock'
+       and not tgisinternal
+  )
+  and position('status = ''published''' in pg_get_functiondef(
+    'private.enforce_inpolor_unlock_evidence()'::regprocedure
+  )) > 0,
+  'all unlock writes require an owned published review'
 );
 
 select ok(
