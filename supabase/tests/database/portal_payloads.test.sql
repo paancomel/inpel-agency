@@ -9,9 +9,11 @@ select columns_are(
   'sessions',
   array[
     'id', 'parent_id', 'parent_preferences', 'status', 'parent_email',
-    'preferred_location', 'monthly_household_income', 'parental_preferences'
+    'preferred_location', 'monthly_household_income', 'parental_preferences',
+    'student_age_band', 'guardian_consent_given',
+    'guardian_consent_recorded_at', 'guardian_consent_declaration'
   ],
-  'sessions exposes the expanded parent contract without removing legacy JSONB'
+  'sessions exposes parent, preference, age-band, and guardian-consent contracts'
 );
 
 select columns_are(
