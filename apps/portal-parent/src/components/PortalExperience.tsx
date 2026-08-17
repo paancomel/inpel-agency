@@ -85,6 +85,14 @@ export function DirectoryPage({
   const [rating, setRating] = useState(0);
   const [cost, setCost] = useState<number | null>(null);
   const [sort, setSort] = useState("rating");
+  const rankById = useMemo(() => new Map(
+    universities
+      .filter((item) => item.rankingEligible)
+      .sort((a, b) => b.rating - a.rating
+        || b.reviewCount - a.reviewCount
+        || a.name.localeCompare(b.name))
+      .map((item, index) => [item.id, index + 1]),
+  ), [universities]);
   const filtered = useMemo(() => universities
     .filter((item) => {
       const matchesQuery = `${item.name} ${item.courses?.join(" ")}`
@@ -132,18 +140,23 @@ export function DirectoryPage({
         <div className="filter-desk">
           <label className="search-field"><Search /><input aria-label="Search universities or courses" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="University or course" /></label>
           <label>Minimum rating<select value={rating} onChange={(event) => setRating(Number(event.target.value))}><option value="0">Any rating</option><option value="7">7.0+</option><option value="8">8.0+</option></select></label>
-          <label>Monthly cost<select value={cost ?? ""} onChange={(event) => setCost(event.target.value ? Number(event.target.value) : null)}><option value="">Any verified cost</option><option value="1500">Under RM1,500</option><option value="2000">Under RM2,000</option></select></label>
+          <label>Monthly cost<select value={cost ?? ""} onChange={(event) => setCost(event.target.value ? Number(event.target.value) : null)}><option value="">Any cost availability</option><option value="1500">Under RM1,500</option><option value="2000">Under RM2,000</option></select></label>
           <label>Sort by<select value={sort} onChange={(event) => setSort(event.target.value)}><option value="rating">Highest rating</option><option value="reviews">Most reviews</option><option value="newest">Newest review</option><option value="cost">Lowest cost</option></select></label>
         </div>
         <div className="result-line"><strong>{filtered.length} institutions</strong><span>Approved community evidence only</span></div>
         {filtered.length ? (
           <div className="university-grid">
-            {filtered.map((item, index) => {
-              const eligibleRank = item.rankingEligible
-                ? filtered.slice(0, index + 1).filter((candidate) => candidate.rankingEligible).length
-                : null;
-              return <UniversityCard key={item.id} university={item} rank={eligibleRank} saved={saved.includes(item.id)} comparing={compare.includes(item.id)} onSave={() => onToggleSaved(item.id)} onCompare={() => onToggleCompare(item.id)} />;
-            })}
+            {filtered.map((item) => (
+              <UniversityCard
+                key={item.id}
+                university={item}
+                rank={rankById.get(item.id) ?? null}
+                saved={saved.includes(item.id)}
+                comparing={compare.includes(item.id)}
+                onSave={() => onToggleSaved(item.id)}
+                onCompare={() => onToggleCompare(item.id)}
+              />
+            ))}
           </div>
         ) : (
           <div className="empty-state"><Search /><h2>No institutions to show.</h2><p>Try a different filter, or return when verified directory data is available.</p></div>
