@@ -2,6 +2,13 @@ name: Disposable staging integration audit
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - agent/critical-platform-contracts
+    paths:
+      - ".github/workflows/staging-integration-audit.yml"
+      - "packages/database/**"
+      - "supabase/**"
 
 permissions:
   contents: read
