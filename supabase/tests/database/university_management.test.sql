@@ -58,7 +58,7 @@ select policies_are(
   'public',
   'universities',
   array[
-    'universities are publicly readable',
+    'universities_public_read',
     'universities_member_delete',
     'universities_member_update',
     'universities_owner_insert'
