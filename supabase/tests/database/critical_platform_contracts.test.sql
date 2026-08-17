@@ -2,7 +2,7 @@ begin;
 
 set local search_path = public, extensions;
 
-select plan(14);
+select plan(15);
 
 select is(
   coalesce((select reloptions @> array['security_invoker=true']
@@ -137,6 +137,33 @@ select throws_ok(
   '22023',
   'Every parent preference is required.',
   'partial parent preference payloads are rejected before invitation creation'
+);
+
+select throws_ok(
+  $$
+    select public.create_parent_student_invitation(
+      'student@example.test',
+      'Selangor',
+      'RM 6,000 - RM 9,999',
+      jsonb_build_object(
+        'campus_vibe', null,
+        'campus_concern', 'Campus safety & physical well-being',
+        'ultimate_win', 'Guaranteed high-paying employment',
+        'independence', 'Needs some structural guidance'
+      ),
+      jsonb_build_object(
+        'campusVibe', null,
+        'campusConcern', 'Campus safety & physical well-being',
+        'ultimateWin', 'Guaranteed high-paying employment',
+        'independence', 'Needs some structural guidance'
+      ),
+      '18+',
+      false
+    )
+  $$,
+  '22023',
+  'Parent preferences contain an unsupported value.',
+  'present-but-null preference values are rejected'
 );
 
 select has_index(
