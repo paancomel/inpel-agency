@@ -19,6 +19,8 @@ export interface PortalContextValue {
   signOut: () => Promise<void>;
   setAuthenticated: (value: boolean) => void;
   setPublishResult: (result: PublishResult | null) => void;
+  setAccuracyAttested: (value: boolean) => void;
+  importDraft: (payload: import("../types/portal").InstitutionImportPayload) => void;
   updateProfile: (patch: Partial<UniversityProfile>) => void;
   setFacilityEnabled: (key: FacilityKey, enabled: boolean) => void;
   setFacilityImage: (key: FacilityKey, publicUrl: string) => void;

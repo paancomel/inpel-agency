@@ -283,6 +283,8 @@ describe("Supabase three-portal integration audit", () => {
         p_monthly_household_income: "RM 6,000 - RM 9,999",
         p_parental_preferences: { campus_vibe: "Modern" },
         p_parent_preferences: { campusVibe: "Modern" },
+        p_student_age_band: "18+",
+        p_guardian_consent_confirmed: false,
       });
       expectNoDatabaseError(invitationResult.error, "parent invitation RPC");
       const invitation = jsonObject(invitationResult.data, "parent invitation RPC");

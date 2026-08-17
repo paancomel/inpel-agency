@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ToastNotification } from "../components/ToastNotification";
 import { publishPortalDraft } from "../lib/database";
 import { canUseInstitutionDemo } from "../lib/runtime";
-import { courseSchema, getPublishBlockers, universityProfileSchema } from "../lib/validation";
+import { getWizardBlockers } from "../lib/validation";
 import { usePortal } from "../state/usePortal";
 import { FACILITIES, type FacilityKey, type PublishResult } from "../types/portal";
 
@@ -24,9 +24,8 @@ function createDemoResult(courseCount: number, galleryCount: number): PublishRes
 }
 
 export function ReviewPage() {
-  const { clearPendingAssets, draft, pendingAssets, setFacilityImage, setPublishResult, updateProfile } = usePortal();
+  const { clearPendingAssets, draft, pendingAssets, setAccuracyAttested, setFacilityImage, setPublishResult, updateProfile } = usePortal();
   const navigate = useNavigate();
-  const [isAttested, setAttested] = useState(false);
   const [isPublishing, setPublishing] = useState(false);
   const [blockers, setBlockers] = useState<string[]>([]);
   const [publishError, setPublishError] = useState<string | null>(null);
@@ -34,14 +33,7 @@ export function ReviewPage() {
   async function handlePublish() {
     if (isPublishing) return;
 
-    const nextBlockers = getPublishBlockers(draft.courses, isAttested);
-    const profileResult = universityProfileSchema.safeParse(draft.profile);
-    if (!profileResult.success) {
-      nextBlockers.push("Complete the required institution profile fields before publishing.");
-    }
-    if (draft.courses.some((course) => !courseSchema.safeParse(course).success)) {
-      nextBlockers.push("Review programme accreditation and required fields before publishing.");
-    }
+    const nextBlockers = getWizardBlockers(draft);
 
     setBlockers(nextBlockers);
     setPublishError(null);
@@ -94,7 +86,7 @@ export function ReviewPage() {
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-coral">Publish readiness</p>
           <h3 className="mt-2 text-xl font-bold text-navy">Accuracy attestation</h3>
           <p className="mt-3 text-sm leading-6 text-slate-500">Publication makes this information visible to students. Confirm it is approved and current.</p>
-          <label className="mt-5 flex cursor-pointer items-start gap-3 border border-slate-200 bg-mist/50 p-4"><input checked={isAttested} className="mt-0.5 h-4 w-4 accent-coral" onChange={(event) => { setAttested(event.target.checked); setBlockers([]); }} type="checkbox" /><span className="text-sm font-semibold leading-6 text-slate-700">Institution Accuracy Attestation</span></label>
+          <label className="mt-5 flex cursor-pointer items-start gap-3 border border-slate-200 bg-mist/50 p-4"><input checked={draft.accuracyAttested} className="mt-0.5 h-4 w-4 accent-coral" onChange={(event) => { setAccuracyAttested(event.target.checked); setBlockers([]); }} type="checkbox" /><span className="text-sm font-semibold leading-6 text-slate-700">Institution Accuracy Attestation. I confirm this publication complies with the <Link className="underline" to="/legal/terms">Terms &amp; Conditions</Link> and acknowledge the <Link className="underline" to="/legal/privacy">Privacy Policy</Link>.</span></label>
           {blockers.length > 0 ? <div className="mt-4" role="alert"><p className="text-sm font-bold text-rose-800">Publishing is not ready:</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-5 text-rose-700">{blockers.map((blocker) => <li key={blocker}>{blocker}</li>)}</ul></div> : null}
           <button className="primary-button mt-5 w-full" disabled={isPublishing} onClick={() => void handlePublish()} type="button">{isPublishing ? <><LoaderCircle aria-hidden="true" className="animate-spin" size={18} /> Publishing…</> : <><Send aria-hidden="true" size={18} /> Publish to INPELER PORTAL</>}</button>
           <p className="mt-3 text-center text-xs text-slate-400">Double-submission protection is active.</p>

@@ -1,0 +1,150 @@
+\set ON_ERROR_STOP on
+
+-- Required psql variables:
+-- source_filename, source_sha256, source_row_count, institutions_csv,
+-- classifications_csv, programmes_csv, institution_aliases_csv,
+-- programme_aliases_csv, collaborations_csv
+begin;
+
+create temporary table stage_reference_institutions (
+  normalized_name text,
+  source_name text,
+  previous_name text
+) on commit drop;
+create temporary table stage_nec_classifications (
+  code text,
+  description text,
+  broad_area text
+) on commit drop;
+create temporary table stage_reference_programmes (
+  canonical_record_id text,
+  institution_normalized_name text,
+  source_bil_first text,
+  source_bils_all text,
+  reference_no text,
+  reference_family text,
+  qualification_name text,
+  normalized_qualification_name text,
+  previous_qualification_name text,
+  nec_code text
+) on commit drop;
+create temporary table stage_institution_aliases (
+  institution_normalized_name text,
+  alias text,
+  normalized_alias text,
+  alias_kind text
+) on commit drop;
+create temporary table stage_programme_aliases (
+  canonical_record_id text,
+  alias text,
+  normalized_alias text,
+  alias_kind text
+) on commit drop;
+create temporary table stage_programme_collaborations (
+  canonical_record_id text,
+  partner_name text,
+  normalized_partner_name text
+) on commit drop;
+
+\copy stage_reference_institutions from :'institutions_csv' with (format csv, header true, encoding 'UTF8')
+\copy stage_nec_classifications from :'classifications_csv' with (format csv, header true, encoding 'UTF8')
+\copy stage_reference_programmes from :'programmes_csv' with (format csv, header true, encoding 'UTF8')
+\copy stage_institution_aliases from :'institution_aliases_csv' with (format csv, header true, encoding 'UTF8')
+\copy stage_programme_aliases from :'programme_aliases_csv' with (format csv, header true, encoding 'UTF8')
+\copy stage_programme_collaborations from :'collaborations_csv' with (format csv, header true, encoding 'UTF8')
+
+insert into private.reference_import_runs (
+  source_filename, source_sha256, source_row_count, status, imported_at
+) values (
+  :'source_filename', :'source_sha256', :source_row_count, 'prepared', null
+)
+on conflict (source_sha256) do update set
+  source_filename = excluded.source_filename,
+  source_row_count = excluded.source_row_count,
+  status = 'prepared',
+  imported_at = null
+returning id as import_id \gset
+
+insert into public.reference_institutions (
+  source_name, normalized_name, previous_name, first_import_id
+)
+select source_name, normalized_name, nullif(previous_name, ''), :'import_id'::uuid
+from stage_reference_institutions
+on conflict (normalized_name) do update set
+  source_name = excluded.source_name,
+  previous_name = coalesce(excluded.previous_name, public.reference_institutions.previous_name),
+  updated_at = current_timestamp;
+
+insert into public.nec_classifications (code, description, broad_area, first_import_id)
+select code, description, broad_area, :'import_id'::uuid
+from stage_nec_classifications
+on conflict (code) do update set
+  description = excluded.description,
+  broad_area = excluded.broad_area;
+
+insert into public.reference_programmes (
+  canonical_record_id, reference_institution_id, source_bil_first, source_bils_all,
+  reference_no, reference_family, qualification_name, normalized_qualification_name,
+  previous_qualification_name, nec_code, import_id
+)
+select
+  staged.canonical_record_id,
+  institution.id,
+  staged.source_bil_first::integer,
+  staged.source_bils_all,
+  staged.reference_no,
+  staged.reference_family,
+  staged.qualification_name,
+  staged.normalized_qualification_name,
+  nullif(staged.previous_qualification_name, ''),
+  staged.nec_code,
+  :'import_id'::uuid
+from stage_reference_programmes staged
+join public.reference_institutions institution
+  on institution.normalized_name = staged.institution_normalized_name
+on conflict (canonical_record_id) do update set
+  reference_institution_id = excluded.reference_institution_id,
+  source_bil_first = excluded.source_bil_first,
+  source_bils_all = excluded.source_bils_all,
+  reference_no = excluded.reference_no,
+  reference_family = excluded.reference_family,
+  qualification_name = excluded.qualification_name,
+  normalized_qualification_name = excluded.normalized_qualification_name,
+  previous_qualification_name = excluded.previous_qualification_name,
+  nec_code = excluded.nec_code,
+  import_id = excluded.import_id,
+  updated_at = current_timestamp;
+
+insert into public.reference_institution_aliases (
+  reference_institution_id, alias, normalized_alias, alias_kind
+)
+select institution.id, staged.alias, staged.normalized_alias, staged.alias_kind
+from stage_institution_aliases staged
+join public.reference_institutions institution
+  on institution.normalized_name = staged.institution_normalized_name
+on conflict (reference_institution_id, normalized_alias) do update set
+  alias = excluded.alias,
+  alias_kind = excluded.alias_kind;
+
+insert into public.reference_programme_aliases (
+  canonical_record_id, alias, normalized_alias, alias_kind
+)
+select canonical_record_id, alias, normalized_alias, alias_kind
+from stage_programme_aliases
+on conflict (canonical_record_id, normalized_alias) do update set
+  alias = excluded.alias,
+  alias_kind = excluded.alias_kind;
+
+insert into public.reference_programme_collaborations (
+  canonical_record_id, partner_name, normalized_partner_name
+)
+select canonical_record_id, partner_name, normalized_partner_name
+from stage_programme_collaborations
+on conflict (canonical_record_id, normalized_partner_name) do update set
+  partner_name = excluded.partner_name;
+
+update private.reference_import_runs
+set status = 'applied', imported_at = current_timestamp
+where id = :'import_id'::uuid;
+
+commit;

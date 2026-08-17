@@ -23,12 +23,75 @@ export interface DemoReport {
   payload: Record<string, unknown>;
 }
 
+export interface SharedCatalogInstitution {
+  referenceInstitutionId: string;
+  institutionName: string;
+  institutionPreviousName: string | null;
+  universityId: string | null;
+  isLinkedToUniversity: boolean;
+  programmeCount: number;
+}
+
+export interface SharedCatalogProgramme {
+  referenceInstitutionId: string;
+  institutionName: string;
+  canonicalRecordId: string;
+  referenceNo: string;
+  referenceFamily: string;
+  qualificationName: string;
+  previousQualificationName: string | null;
+  necCode: string;
+  necDescription: string;
+  necBroadArea: string;
+  courseId: string | null;
+  isLinkedToCourse: boolean;
+}
+
+export interface SharedCatalog {
+  institutions: SharedCatalogInstitution[];
+  programmes: SharedCatalogProgramme[];
+}
+
 interface DatabaseError {
   message: string;
 }
 
 interface RpcClient {
   rpc(this: void, functionName: string, args: Record<string, unknown>): Promise<{ data: unknown; error: DatabaseError | null }>;
+}
+
+interface CatalogInstitutionRow {
+  reference_institution_id: string;
+  institution_name: string;
+  institution_previous_name: string | null;
+  university_id: string | null;
+  is_linked_to_university: boolean;
+  programme_count: number;
+}
+
+interface CatalogProgrammeRow {
+  reference_institution_id: string;
+  institution_name: string;
+  canonical_record_id: string;
+  reference_no: string;
+  reference_family: string;
+  qualification_name: string;
+  previous_qualification_name: string | null;
+  nec_code: string;
+  nec_description: string;
+  nec_broad_area: string;
+  course_id: string | null;
+  is_linked_to_course: boolean;
+}
+
+interface CatalogQuery<T> {
+  select(this: void, columns: string): CatalogQuery<T>;
+  order(this: void, column: string, options?: { ascending?: boolean }): CatalogQuery<T>;
+  limit(this: void, count: number): Promise<{ data: T[] | null; error: DatabaseError | null }>;
+}
+
+interface CatalogClient {
+  from<T>(this: void, relation: string): CatalogQuery<T>;
 }
 
 function requireObject(value: unknown, message: string): Record<string, unknown> {
@@ -108,6 +171,8 @@ export async function syncParentSession(profile: ParentProfile): Promise<SyncRes
       independence: profile.preferences.independence,
     },
     p_parent_preferences: profile.preferences,
+    p_student_age_band: profile.studentAgeBand,
+    p_guardian_consent_confirmed: profile.guardianConsentConfirmed,
   });
   if (error) throw new Error(error.message);
   const invitation = requireObject(data, "Invitation creation returned an invalid response.");
@@ -187,4 +252,55 @@ export async function getAuthorizedReport(sessionId: string): Promise<DemoReport
   const payload = requireObject(data, "The report is not available for this account.");
   if (payload.session_id !== sessionId) throw new Error("The report is not available for this account.");
   return { sessionId, payload };
+}
+
+/**
+ * Reads the shared, database-backed catalogue used by all three portals.
+ * The bounded programme list is for report-page discovery; no local rows are
+ * substituted when the view or Supabase connection is unavailable.
+ */
+export async function getSharedCatalog(): Promise<SharedCatalog> {
+  const supabase = await getRequiredClient();
+  const catalog = supabase as unknown as CatalogClient;
+  const [institutionResult, programmeResult] = await Promise.all([
+    catalog
+      .from<CatalogInstitutionRow>("shared_catalog_institutions")
+      .select("reference_institution_id,institution_name,institution_previous_name,university_id,is_linked_to_university,programme_count")
+      .order("institution_name", { ascending: true })
+      .limit(1_000),
+    catalog
+      .from<CatalogProgrammeRow>("shared_catalog_programmes")
+      .select("reference_institution_id,institution_name,canonical_record_id,reference_no,reference_family,qualification_name,previous_qualification_name,nec_code,nec_description,nec_broad_area,course_id,is_linked_to_course")
+      .order("institution_name", { ascending: true })
+      .limit(36),
+  ]);
+
+  if (institutionResult.error) throw new Error(`Shared institution catalogue is unavailable: ${institutionResult.error.message}`);
+  if (programmeResult.error) throw new Error(`Shared programme catalogue is unavailable: ${programmeResult.error.message}`);
+  if (!institutionResult.data || !programmeResult.data) throw new Error("Shared university catalogue returned no data response.");
+
+  return {
+    institutions: institutionResult.data.map((row) => ({
+      referenceInstitutionId: row.reference_institution_id,
+      institutionName: row.institution_name,
+      institutionPreviousName: row.institution_previous_name,
+      universityId: row.university_id,
+      isLinkedToUniversity: row.is_linked_to_university,
+      programmeCount: row.programme_count,
+    })),
+    programmes: programmeResult.data.map((row) => ({
+      referenceInstitutionId: row.reference_institution_id,
+      institutionName: row.institution_name,
+      canonicalRecordId: row.canonical_record_id,
+      referenceNo: row.reference_no,
+      referenceFamily: row.reference_family,
+      qualificationName: row.qualification_name,
+      previousQualificationName: row.previous_qualification_name,
+      necCode: row.nec_code,
+      necDescription: row.nec_description,
+      necBroadArea: row.nec_broad_area,
+      courseId: row.course_id,
+      isLinkedToCourse: row.is_linked_to_course,
+    })),
+  };
 }

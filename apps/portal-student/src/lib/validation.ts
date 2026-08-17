@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { InstitutionImportPayload, PortalDraft } from "../types/portal";
+
 const optionalTrimmedString = z.string().max(2_000).trim();
 const optionalNumericString = z
   .string()
@@ -18,8 +20,29 @@ const optionalWholeNumberString = z
     message: "Enter a whole number.",
   });
 
+export const PUBLIC_EMAIL_DOMAINS = new Set([
+  "gmail.com",
+  "yahoo.com",
+  "outlook.com",
+  "hotmail.com",
+  "icloud.com",
+]);
+
+export function isPublicEmailDomain(email: string): boolean {
+  const domain = email.trim().toLowerCase().split("@")[1];
+  return Boolean(domain && PUBLIC_EMAIL_DOMAINS.has(domain));
+}
+
+export const institutionalEmailSchema = z
+  .string()
+  .trim()
+  .email("Enter a valid institutional email address.")
+  .refine((email) => !isPublicEmailDomain(email), {
+    message: "Use an official institution email address, not a public email provider.",
+  });
+
 export const loginSchema = z.object({
-  email: z.string().trim().email("Enter a valid institutional email address."),
+  email: institutionalEmailSchema,
   password: z.string().min(8, "Password must contain at least 8 characters.").max(128),
 });
 
@@ -124,8 +147,32 @@ export const portalDraftSchema = z.object({
     counselling: z.string().url().optional(),
   }).default({}),
   gallery: z.array(galleryImageSchema).max(20),
+  accuracyAttested: z.boolean().default(false),
   courses: z.array(storedCourseSchema).max(100),
   updatedAt: z.iso.datetime(),
+});
+
+export const institutionImportSchema: z.ZodType<InstitutionImportPayload> = z.object({
+  profile: universityProfileDraftSchema.partial().optional(),
+  facilities: z.object({
+    library: z.boolean().optional(),
+    labs: z.boolean().optional(),
+    accommodation: z.boolean().optional(),
+    sports: z.boolean().optional(),
+    career: z.boolean().optional(),
+    counselling: z.boolean().optional(),
+  }).optional(),
+  facilityImages: z.object({
+    library: z.string().url().optional(),
+    labs: z.string().url().optional(),
+    accommodation: z.string().url().optional(),
+    sports: z.string().url().optional(),
+    career: z.string().url().optional(),
+    counselling: z.string().url().optional(),
+  }).optional(),
+  gallery: z.array(galleryImageSchema.omit({ id: true })).max(20).optional(),
+  courses: z.array(courseSchema).max(100).optional(),
+  accuracyAttested: z.boolean().optional(),
 });
 
 export function getPublishBlockers(
@@ -143,4 +190,43 @@ export function getPublishBlockers(
   }
 
   return blockers;
+}
+
+export type WizardStep = {
+  id: "identity" | "contacts" | "programmes" | "fees" | "facilities" | "gallery" | "accuracy";
+  label: string;
+  complete: boolean;
+};
+
+export function getWizardSteps(draft: PortalDraft): WizardStep[] {
+  const profile = draft.profile;
+  const hasValidProgramme = draft.courses.length > 0
+    && draft.courses.every((course) => courseSchema.safeParse(course).success);
+  const hasProgrammeFee = draft.courses.some((course) => course.totalBaseTuitionFee.trim() !== "");
+  const hasFacilityImage = Object.entries(draft.facilities).some(
+    ([key, enabled]) => enabled && Boolean(draft.facilityImages[key as keyof typeof draft.facilities]),
+  );
+
+  return [
+    { id: "identity", label: "Identity and location", complete: Boolean(profile.name && profile.location && profile.address && profile.website) },
+    { id: "contacts", label: "Official contacts", complete: Boolean(profile.contactEmail && profile.contactPhone) },
+    { id: "programmes", label: "Programmes and MQA", complete: hasValidProgramme },
+    { id: "fees", label: "Fees", complete: Boolean(profile.tuitionFees || hasProgrammeFee) },
+    { id: "facilities", label: "Facilities", complete: hasFacilityImage },
+    { id: "gallery", label: "Gallery", complete: draft.gallery.length > 0 },
+    { id: "accuracy", label: "Accuracy attestation", complete: draft.accuracyAttested },
+  ];
+}
+
+export function getWizardBlockers(draft: PortalDraft): string[] {
+  const blockerCopy: Record<WizardStep["id"], string> = {
+    identity: "Complete institution identity, location, address, and official website.",
+    contacts: "Add an official institution email address and contact phone number.",
+    programmes: "Add at least one programme with complete MQA accreditation details.",
+    fees: "Add published institution or programme fee information.",
+    facilities: "Add at least one facility with a verified image.",
+    gallery: "Add at least one public gallery image.",
+    accuracy: "Confirm the institution accuracy attestation before publishing.",
+  };
+  return getWizardSteps(draft).filter((step) => !step.complete).map((step) => blockerCopy[step.id]);
 }

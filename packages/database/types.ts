@@ -49,6 +49,10 @@ export type InstitutionMemberStatus = "active" | "removed";
 export type InstitutionDomainStatus = "approved" | "suspended";
 export type InstitutionDomainSource = "institution" | "manual_exception";
 export type InstitutionVersionSource = "manual" | "import" | "restore" | "system";
+export type ReferenceLinkStatus = "pending" | "verified" | "rejected";
+export type ReferenceMatchMethod = "manual" | "normalized_name" | "import";
+export type PortalCatalogName = "inpel" | "inpeler" | "inpolor";
+export type PortalCatalogStatus = "draft" | "published" | "hidden";
 
 /** Structured portal values persisted in JSONB/text columns. */
 export type MalaysianStudyLocation =
@@ -306,6 +310,184 @@ export interface CoursesInsert {
 
 export type CoursesUpdate = Partial<CoursesInsert>;
 
+export interface ReferenceInstitutionsRow {
+  id: Uuid;
+  source_name: string;
+  normalized_name: string;
+  previous_name: string | null;
+  first_import_id: Uuid;
+  created_at: Timestamp;
+  updated_at: Timestamp;
+}
+export interface ReferenceInstitutionsInsert {
+  id?: Uuid;
+  source_name: string;
+  normalized_name: string;
+  previous_name?: string | null;
+  first_import_id: Uuid;
+  created_at?: Timestamp;
+  updated_at?: Timestamp;
+}
+export type ReferenceInstitutionsUpdate = Partial<ReferenceInstitutionsInsert>;
+
+export interface ReferenceInstitutionAliasesRow {
+  id: Uuid;
+  reference_institution_id: Uuid;
+  alias: string;
+  normalized_alias: string;
+  alias_kind: "previous_name" | "manual";
+  created_at: Timestamp;
+}
+export interface ReferenceInstitutionAliasesInsert {
+  id?: Uuid;
+  reference_institution_id: Uuid;
+  alias: string;
+  normalized_alias: string;
+  alias_kind: "previous_name" | "manual";
+  created_at?: Timestamp;
+}
+export type ReferenceInstitutionAliasesUpdate = Partial<ReferenceInstitutionAliasesInsert>;
+
+export interface NecClassificationsRow {
+  code: string;
+  description: string;
+  broad_area: string;
+  first_import_id: Uuid;
+  created_at: Timestamp;
+}
+export interface NecClassificationsInsert {
+  code: string;
+  description: string;
+  broad_area: string;
+  first_import_id: Uuid;
+  created_at?: Timestamp;
+}
+export type NecClassificationsUpdate = Partial<NecClassificationsInsert>;
+
+export interface ReferenceProgrammesRow {
+  canonical_record_id: string;
+  reference_institution_id: Uuid;
+  source_bil_first: number;
+  source_bils_all: string;
+  reference_no: string;
+  reference_family: string;
+  qualification_name: string;
+  normalized_qualification_name: string;
+  previous_qualification_name: string | null;
+  nec_code: string;
+  import_id: Uuid;
+  created_at: Timestamp;
+  updated_at: Timestamp;
+}
+export interface ReferenceProgrammesInsert {
+  canonical_record_id: string;
+  reference_institution_id: Uuid;
+  source_bil_first: number;
+  source_bils_all: string;
+  reference_no: string;
+  reference_family: string;
+  qualification_name: string;
+  normalized_qualification_name: string;
+  previous_qualification_name?: string | null;
+  nec_code: string;
+  import_id: Uuid;
+  created_at?: Timestamp;
+  updated_at?: Timestamp;
+}
+export type ReferenceProgrammesUpdate = Partial<ReferenceProgrammesInsert>;
+
+export interface ReferenceProgrammeAliasesRow {
+  id: Uuid;
+  canonical_record_id: string;
+  alias: string;
+  normalized_alias: string;
+  alias_kind: "previous_name" | "manual";
+  created_at: Timestamp;
+}
+export interface ReferenceProgrammeAliasesInsert {
+  id?: Uuid;
+  canonical_record_id: string;
+  alias: string;
+  normalized_alias: string;
+  alias_kind: "previous_name" | "manual";
+  created_at?: Timestamp;
+}
+export type ReferenceProgrammeAliasesUpdate = Partial<ReferenceProgrammeAliasesInsert>;
+
+export interface ReferenceProgrammeCollaborationsRow {
+  canonical_record_id: string;
+  partner_name: string;
+  normalized_partner_name: string;
+  created_at: Timestamp;
+}
+export interface ReferenceProgrammeCollaborationsInsert {
+  canonical_record_id: string;
+  partner_name: string;
+  normalized_partner_name: string;
+  created_at?: Timestamp;
+}
+export type ReferenceProgrammeCollaborationsUpdate = Partial<ReferenceProgrammeCollaborationsInsert>;
+
+export interface ReferenceInstitutionLinksRow {
+  reference_institution_id: Uuid;
+  university_id: Uuid;
+  status: ReferenceLinkStatus;
+  match_method: ReferenceMatchMethod;
+  reviewed_at: Timestamp | null;
+  notes: string | null;
+  created_at: Timestamp;
+}
+export interface ReferenceInstitutionLinksInsert {
+  reference_institution_id: Uuid;
+  university_id: Uuid;
+  status?: ReferenceLinkStatus;
+  match_method?: ReferenceMatchMethod;
+  reviewed_at?: Timestamp | null;
+  notes?: string | null;
+  created_at?: Timestamp;
+}
+export type ReferenceInstitutionLinksUpdate = Partial<ReferenceInstitutionLinksInsert>;
+
+export interface ReferenceProgrammeLinksRow {
+  canonical_record_id: string;
+  course_id: Uuid;
+  status: ReferenceLinkStatus;
+  match_method: ReferenceMatchMethod;
+  reviewed_at: Timestamp | null;
+  notes: string | null;
+  created_at: Timestamp;
+}
+export interface ReferenceProgrammeLinksInsert {
+  canonical_record_id: string;
+  course_id: Uuid;
+  status?: ReferenceLinkStatus;
+  match_method?: ReferenceMatchMethod;
+  reviewed_at?: Timestamp | null;
+  notes?: string | null;
+  created_at?: Timestamp;
+}
+export type ReferenceProgrammeLinksUpdate = Partial<ReferenceProgrammeLinksInsert>;
+
+export interface PortalCatalogVisibilityRow {
+  university_id: Uuid;
+  portal: PortalCatalogName;
+  status: PortalCatalogStatus;
+  published_at: Timestamp | null;
+  notes: string | null;
+  created_at: Timestamp;
+  updated_at: Timestamp;
+}
+export interface PortalCatalogVisibilityInsert {
+  university_id: Uuid;
+  portal: PortalCatalogName;
+  status?: PortalCatalogStatus;
+  published_at?: Timestamp | null;
+  notes?: string | null;
+  created_at?: Timestamp;
+  updated_at?: Timestamp;
+}
+export type PortalCatalogVisibilityUpdate = Partial<PortalCatalogVisibilityInsert>;
+
 export interface SessionsRow {
   id: Uuid;
   parent_id: Uuid | null;
@@ -314,6 +496,10 @@ export interface SessionsRow {
   preferred_location: MalaysianStudyLocation | null;
   monthly_household_income: MonthlyHouseholdIncome | null;
   parental_preferences: ParentalPreferences | null;
+  student_age_band: "15-17" | "18+" | null;
+  guardian_consent_given: boolean;
+  guardian_consent_recorded_at: Timestamp | null;
+  guardian_consent_declaration: string | null;
   status: SessionStatus;
 }
 
@@ -325,6 +511,10 @@ export interface SessionsInsert {
   preferred_location?: MalaysianStudyLocation | null;
   monthly_household_income?: MonthlyHouseholdIncome | null;
   parental_preferences?: ParentalPreferences | null;
+  student_age_band?: "15-17" | "18+" | null;
+  guardian_consent_given?: boolean;
+  guardian_consent_recorded_at?: Timestamp | null;
+  guardian_consent_declaration?: string | null;
   status: SessionStatus;
 }
 
@@ -847,6 +1037,60 @@ export interface Database {
           },
         ];
       };
+      reference_institutions: {
+        Row: ReferenceInstitutionsRow;
+        Insert: ReferenceInstitutionsInsert;
+        Update: ReferenceInstitutionsUpdate;
+        Relationships: [];
+      };
+      reference_institution_aliases: {
+        Row: ReferenceInstitutionAliasesRow;
+        Insert: ReferenceInstitutionAliasesInsert;
+        Update: ReferenceInstitutionAliasesUpdate;
+        Relationships: [];
+      };
+      nec_classifications: {
+        Row: NecClassificationsRow;
+        Insert: NecClassificationsInsert;
+        Update: NecClassificationsUpdate;
+        Relationships: [];
+      };
+      reference_programmes: {
+        Row: ReferenceProgrammesRow;
+        Insert: ReferenceProgrammesInsert;
+        Update: ReferenceProgrammesUpdate;
+        Relationships: [];
+      };
+      reference_programme_aliases: {
+        Row: ReferenceProgrammeAliasesRow;
+        Insert: ReferenceProgrammeAliasesInsert;
+        Update: ReferenceProgrammeAliasesUpdate;
+        Relationships: [];
+      };
+      reference_programme_collaborations: {
+        Row: ReferenceProgrammeCollaborationsRow;
+        Insert: ReferenceProgrammeCollaborationsInsert;
+        Update: ReferenceProgrammeCollaborationsUpdate;
+        Relationships: [];
+      };
+      reference_institution_links: {
+        Row: ReferenceInstitutionLinksRow;
+        Insert: ReferenceInstitutionLinksInsert;
+        Update: ReferenceInstitutionLinksUpdate;
+        Relationships: [];
+      };
+      reference_programme_links: {
+        Row: ReferenceProgrammeLinksRow;
+        Insert: ReferenceProgrammeLinksInsert;
+        Update: ReferenceProgrammeLinksUpdate;
+        Relationships: [];
+      };
+      portal_catalog_visibility: {
+        Row: PortalCatalogVisibilityRow;
+        Insert: PortalCatalogVisibilityInsert;
+        Update: PortalCatalogVisibilityUpdate;
+        Relationships: [];
+      };
       sessions: {
         Row: SessionsRow;
         Insert: SessionsInsert;
@@ -1087,6 +1331,60 @@ export interface Database {
       };
     };
     Views: {
+      shared_catalog_institutions: {
+        Row: {
+          reference_institution_id: Uuid;
+          institution_name: string;
+          institution_previous_name: string | null;
+          university_id: Uuid | null;
+          is_linked_to_university: boolean;
+          programme_count: number;
+        };
+        Relationships: [];
+      };
+      shared_catalog_programmes: {
+        Row: {
+          reference_institution_id: Uuid;
+          institution_name: string;
+          canonical_record_id: string;
+          reference_no: string;
+          reference_family: string;
+          qualification_name: string;
+          previous_qualification_name: string | null;
+          nec_code: string;
+          nec_description: string;
+          nec_broad_area: string;
+          course_id: Uuid | null;
+          is_linked_to_course: boolean;
+        };
+        Relationships: [];
+      };
+      inpolor_catalog_institutions: {
+        Row: {
+          university_id: Uuid;
+          university_name: string;
+          location: string | null;
+          address: string | null;
+          reference_institution_id: Uuid;
+          reference_institution_name: string;
+          linked_programme_count: number;
+        };
+        Relationships: [];
+      };
+      inpolor_catalog_programmes: {
+        Row: {
+          university_id: Uuid;
+          course_id: Uuid;
+          canonical_record_id: string;
+          reference_no: string;
+          reference_family: string;
+          qualification_name: string;
+          nec_code: string;
+          nec_description: string;
+          nec_broad_area: string;
+        };
+        Relationships: [];
+      };
       inpolor_university_summaries: {
         Row: {
           university_id: Uuid;
@@ -1110,11 +1408,13 @@ export interface Database {
     Functions: {
       create_parent_student_invitation: {
         Args: {
+          p_guardian_consent_confirmed: boolean;
           p_monthly_household_income: string;
           p_parent_preferences: Json;
           p_parental_preferences: Json;
           p_preferred_location: string;
           p_student_email: string;
+          p_student_age_band: string;
         };
         Returns: Json;
       };

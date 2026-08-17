@@ -8,6 +8,7 @@ import { EmailNotification } from "./EmailNotification";
 const invitationToken = "a".repeat(64);
 const parent = {
   location: "Selangor", income: "RM 6,000 - RM 9,999", email: "parent@example.com", studentEmail: "student@example.com",
+  studentAgeBand: "18+", guardianConsentConfirmed: false,
   preferences: {
     campusVibe: "Public (IPTA) - Warm & Local", campusConcern: "Campus safety & physical well-being",
     ultimateWin: "Guaranteed high-paying employment", independence: "Needs some structural guidance",

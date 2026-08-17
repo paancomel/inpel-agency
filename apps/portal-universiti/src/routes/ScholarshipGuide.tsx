@@ -2,6 +2,8 @@ import { ArrowLeft, CalendarDays, CheckCircle2, FileCheck2, Lightbulb } from "lu
 import { useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 
+import { t, useLanguage } from "../lib/language";
+
 const guides = {
   "merit-excellence": { title: "Merit Excellence Award", value: "Up to RM 12,000", deadline: "Submit within 14 days of receiving an offer" },
   "future-leaders": { title: "Future Leaders Bursary", value: "Up to RM 15,000", deadline: "Applications typically close before the September intake" },
@@ -11,6 +13,8 @@ const guides = {
 const checklist = ["Certified SPM results", "Identity document copy", "Programme offer letter", "One-page personal statement", "Leadership or activity evidence", "Household income documents"];
 
 export function ScholarshipGuide() {
+  const { language } = useLanguage();
+  const tr = (ms: string, en: string, ta: string, zh: string) => t(language, { ms, en, ta, "zh-CN": zh });
   const { guideId } = useParams();
   const navigate = useNavigate();
   const [complete, setComplete] = useState<string[]>([]);
@@ -21,11 +25,11 @@ export function ScholarshipGuide() {
   return (
     <section className="min-h-[76vh] bg-cream px-4 py-10 sm:px-6 sm:py-16">
       <div className="mx-auto max-w-5xl">
-        <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-forest"><ArrowLeft className="size-4" /> Back to results</button>
+        <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-forest"><ArrowLeft className="size-4" /> {tr("Kembali ke keputusan", "Back to results", "முடிவுகளுக்குத் திரும்பு", "返回结果")}</button>
         <header className="mt-7 border-b border-slate-300 pb-8"><p className="text-xs font-bold tracking-[0.18em] text-amber-800 uppercase">Scholarship application guide</p><h1 className="mt-3 max-w-3xl font-display text-5xl font-bold tracking-tight text-forest sm:text-6xl">{guide.title}</h1><div className="mt-6 flex flex-wrap gap-3 text-sm"><span className="bg-mint px-4 py-2 font-bold text-forest">Potential value · {guide.value}</span><span className="bg-sun/20 px-4 py-2 font-bold text-amber-900">{guide.deadline}</span></div></header>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.72fr]">
-          <section className="border border-slate-200 bg-white p-6 sm:p-8" aria-labelledby="checklist-title"><div className="flex items-center gap-3"><FileCheck2 className="size-6 text-leaf" /><h2 id="checklist-title" className="font-display text-3xl font-bold text-forest">Document checklist</h2></div><p className="mt-3 leading-7 text-slate-600">Tick items as you prepare them. This checklist stays on this page only and is not uploaded.</p><div className="mt-6 space-y-2">{checklist.map((item) => <label key={item} className="flex cursor-pointer items-center gap-3 border border-slate-200 p-4"><input type="checkbox" checked={complete.includes(item)} onChange={() => setComplete((current) => current.includes(item) ? current.filter((value) => value !== item) : [...current, item])} className="size-4 accent-leaf" /><span className="font-semibold text-forest">{item}</span></label>)}</div></section>
+          <section className="border border-slate-200 bg-white p-6 sm:p-8" aria-labelledby="checklist-title"><div className="flex items-center gap-3"><FileCheck2 className="size-6 text-leaf" /><h2 id="checklist-title" className="font-display text-3xl font-bold text-forest">{tr("Senarai semak dokumen", "Document checklist", "ஆவணச் சரிபார்ப்புப் பட்டியல்", "文件清单")}</h2></div><p className="mt-3 leading-7 text-slate-600">{tr("Tandakan dokumen apabila siap. Senarai ini kekal pada halaman ini dan tidak dimuat naik.", "Tick items as you prepare them. This checklist stays on this page only and is not uploaded.", "ஆவணங்களைத் தயாரிக்கும்போது குறியிடுங்கள். இந்தப் பட்டியல் பதிவேற்றப்படாது.", "准备好文件后即可勾选。此清单只保留在本页面，不会上传。")}</p><div className="mt-6 space-y-2">{checklist.map((item) => <label key={item} className="flex cursor-pointer items-center gap-3 border border-slate-200 p-4"><input type="checkbox" checked={complete.includes(item)} onChange={() => setComplete((current) => current.includes(item) ? current.filter((value) => value !== item) : [...current, item])} className="size-4 accent-leaf" /><span className="font-semibold text-forest">{item}</span></label>)}</div></section>
 
           <aside className="space-y-5">
             <section className="border border-slate-200 bg-forest p-6 text-white"><p className="text-xs font-bold tracking-[0.14em] text-emerald-200 uppercase">Readiness</p><p className="mt-3 font-display text-5xl font-bold">{progress}%</p><div className="mt-4 h-2 bg-white/15"><div className="h-full bg-sun transition-all" style={{ width: `${progress}%` }} /></div><p className="mt-3 text-sm text-emerald-50/70">{complete.length} of {checklist.length} documents prepared</p></section>

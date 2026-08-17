@@ -8,6 +8,8 @@ const validParent = {
   income: "RM 6,000 - RM 9,999",
   email: "parent@example.com",
   studentEmail: "student@example.com",
+  studentAgeBand: "18+",
+  guardianConsentConfirmed: false,
   preferences: {
     campusVibe: "Public (IPTA) - Warm & Local",
     campusConcern: "Campus safety & physical well-being",
@@ -28,6 +30,12 @@ describe("portal validation", () => {
       expect(messages).toContain("Please enter a valid email address.");
       expect(messages).toContain("Please answer every parental preference question.");
     }
+  });
+
+  it("requires explicit guardian consent for a student aged 15 to 17", () => {
+    const result = parentProfileSchema.safeParse({ ...validParent, studentAgeBand: "15-17", guardianConsentConfirmed: false });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues.map((issue) => issue.message)).toContain("Parent or legal guardian consent is required for students aged 15 to 17.");
   });
 
   it("rejects a short student password", () => {

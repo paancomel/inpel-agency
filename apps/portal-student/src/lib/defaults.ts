@@ -53,6 +53,7 @@ export function createEmptyPortalDraft(now = new Date().toISOString()): PortalDr
     },
     facilityImages: {},
     gallery: [],
+    accuracyAttested: false,
     courses: [],
     updatedAt: now,
   };

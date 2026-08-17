@@ -3,24 +3,29 @@ import {
   Building2,
   CheckCircle2,
   ClipboardCheck,
+  FileUp,
   LogOut,
   Menu,
   X,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { LegalLinks } from "@repo/ui";
 
 import { usePortal } from "../state/usePortal";
+import { WizardProgress } from "./WizardProgress";
 
 const navigation = [
   { label: "Global profile", to: "/dashboard/global-profile", icon: Building2 },
   { label: "Programmes", to: "/dashboard/courses", icon: BookOpenText },
+  { label: "Import data", to: "/dashboard/import", icon: FileUp },
   { label: "Review and publish", to: "/dashboard/review", icon: ClipboardCheck },
 ] as const;
 
 function getPageTitle(pathname: string): string {
   if (pathname.includes("courses/form")) return "Programme editor";
   if (pathname.includes("courses")) return "Programmes";
+  if (pathname.includes("import")) return "Import data";
   if (pathname.includes("review")) return "Review and publish";
   if (pathname.includes("success")) return "Publishing complete";
   return "Global profile";
@@ -76,6 +81,7 @@ export function DashboardLayout() {
             </NavLink>
           ))}
         </nav>
+        <WizardProgress draft={draft} />
         <div className="border-t border-frost p-4">
           <button className="flex w-full items-center gap-3 px-3 py-3 text-sm font-semibold text-slate-500 hover:bg-mist hover:text-navy" onClick={() => void signOut()} type="button">
             <LogOut aria-hidden="true" size={18} /> Sign out
@@ -95,6 +101,7 @@ export function DashboardLayout() {
           </div>
         </header>
         <main className="px-5 py-8 sm:px-8 lg:px-10 lg:py-10"><Outlet /></main>
+        <footer className="border-t border-frost bg-white px-5 py-6 sm:px-8 lg:px-10"><LegalLinks className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-navy underline underline-offset-4" /></footer>
       </div>
     </div>
   );

@@ -13,11 +13,11 @@ export const GRADE_OPTIONS = ["A+", "A", "A-", "B+", "B", "C+", "C", "D", "E", "
 const preferenceError = "Please answer every parental preference question.";
 const emailPattern = /^\S+@\S+\.\S+$/;
 
-export const parentProfileSchema = z.object({
+const parentProfileFields = z.object({
   location: z.enum(MALAYSIA_LOCATIONS, { error: "Please select your location." }),
   income: z.enum(HOUSEHOLD_INCOME_OPTIONS, { error: "Please select your monthly household income." }),
-  email: z.string().trim().regex(emailPattern, "Please enter a valid email address."),
   studentEmail: z.string().trim().regex(emailPattern, "Please enter a valid student email address."),
+  studentAgeBand: z.enum(["15-17", "18+"], { error: "Please confirm the student's age group." }),
   preferences: z.object({
     campusVibe: z.enum(PARENT_PREFERENCE_OPTIONS.campusVibe, { error: preferenceError }),
     campusConcern: z.enum(PARENT_PREFERENCE_OPTIONS.campusConcern, { error: preferenceError }),
@@ -26,7 +26,20 @@ export const parentProfileSchema = z.object({
   }),
 });
 
-export const parentPrioritiesSchema = parentProfileSchema.omit({ email: true });
+export const parentPrioritiesSchema = parentProfileFields;
+
+export const parentProfileSchema = parentProfileFields.extend({
+  email: z.string().trim().regex(emailPattern, "Please enter a valid email address."),
+  guardianConsentConfirmed: z.boolean(),
+}).superRefine((profile, context) => {
+  if (profile.studentAgeBand === "15-17" && !profile.guardianConsentConfirmed) {
+    context.addIssue({
+      code: "custom",
+      message: "Parent or legal guardian consent is required for students aged 15 to 17.",
+      path: ["guardianConsentConfirmed"],
+    });
+  }
+});
 
 export const studentAccountSchema = z.object({
   email: z.string().trim().regex(emailPattern, "Please enter a valid student email address."),

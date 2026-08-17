@@ -1,5 +1,5 @@
 import type { Database, Json } from "@repo/database";
-import { EMPTY_RATINGS, RATING_DIMENSIONS, type Ratings, type Review, type ReviewDraft, type ReviewIdentity, type UniversityTarget } from "./types";
+import { EMPTY_RATINGS, RATING_DIMENSIONS, type Ratings, type Review, type ReviewDraft, type ReviewIdentity } from "./types";
 
 export type ReviewSyncStatus = "submitted" | "local";
 const average = (ratings: Ratings) => Number((Object.values(ratings).reduce((sum, value) => sum + value, 0) / 8).toFixed(1));
@@ -8,7 +8,8 @@ export function createReviewSubmission(draft: ReviewDraft) {
   if (!draft.universityId) throw new Error("Choose a university before sending a review for moderation.");
   const content = { mainExperience: draft.spillTheTea.trim(), transport: draft.experiences.transport, affordableFoodPlaces: draft.experiences.food?.split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean).slice(0, 3), classSchedule: draft.experiences.classes, dailyCommute: draft.experiences.commute, nearbyActivities: draft.experiences.activities, advantagesDisadvantages: draft.experiences.prosCons, livingCost: draft.experiences.livingCost, safety: draft.experiences.safety, hostelCurfew: draft.experiences.curfew, careerProspects: draft.experiences.career, partTimeWork: draft.experiences.partTime, goodLecturers: draft.experiences.lecturers, boringClasses: draft.experiences.boringClasses, betweenClassHangouts: draft.experiences.hangouts };
   const photoIds = Object.values(draft.photos ?? {}).flat().filter((photo) => photo.status === "confirmed").map((photo) => photo.id);
-  const reviewData = { universityId: draft.universityId, kind: draft.reviewType, ...(draft.rewardReviewId ? { reviewId: draft.rewardReviewId } : {}), courseName: draft.course.trim(), studyYear: Number(draft.year), ratingFacilities: draft.ratings.facilities, ratingTeaching: draft.ratings.teaching, ratingClassExperience: draft.ratings.classes, ratingSafety: draft.ratings.safety, ratingValue: draft.ratings.value, ratingTransport: draft.ratings.transport, ratingCampusLife: draft.ratings.campusLife, ratingCareer: draft.ratings.career, ...(draft.livingCost ? { livingCostMonthly: draft.livingCost } : {}), content, photoIds } as unknown as Json;
+  const declarations = { version: "inpolor-review-v1", age18OrOlder: draft.declarations.age, termsAccepted: draft.declarations.terms, privacyAcknowledged: draft.declarations.privacy, contentRightsConfirmed: draft.declarations.rights };
+  const reviewData = { universityId: draft.universityId, kind: draft.reviewType, ...(draft.rewardReviewId ? { reviewId: draft.rewardReviewId } : {}), courseName: draft.course.trim(), studyYear: Number(draft.year), ratingFacilities: draft.ratings.facilities, ratingTeaching: draft.ratings.teaching, ratingClassExperience: draft.ratings.classes, ratingSafety: draft.ratings.safety, ratingValue: draft.ratings.value, ratingTransport: draft.ratings.transport, ratingCampusLife: draft.ratings.campusLife, ratingCareer: draft.ratings.career, ...(draft.livingCost ? { livingCostMonthly: draft.livingCost } : {}), content, photoIds, declarations } as unknown as Json;
   return { universityId: draft.universityId, reviewData, isAnonymous: true };
 }
 
@@ -37,11 +38,6 @@ export function toPublishedReview(value: unknown): Review | null {
 export async function loadPublishedReviews(): Promise<{ reviews: Review[]; connected: boolean }> {
   if (import.meta.env.MODE === "test") return { reviews: [], connected: false };
   try { const { supabase } = await import("@repo/database"); const { data, error } = await supabase.from("published_reviews").select("*").order("created_at", { ascending: false }); return error ? { reviews: [], connected: false } : { reviews: (data ?? []).map(toPublishedReview).filter((item): item is Review => Boolean(item)), connected: true }; } catch { return { reviews: [], connected: false }; }
-}
-
-export async function loadUniversityTargets(): Promise<{ status: "ready"; targets: UniversityTarget[] } | { status: "unavailable"; targets: UniversityTarget[]; message: string }> {
-  if (import.meta.env.MODE === "test") return { status: "unavailable", targets: [], message: "Using curated preview institutions." };
-  try { const { supabase } = await import("@repo/database"); const { data, error } = await supabase.from("universities").select("id, name, location").order("name"); const targets = (data ?? []).flatMap((value) => { const row = record(value); const id = text(row?.id); const name = text(row?.name); return id && name ? [{ id, name, location: text(row?.location) }] : []; }); return error || !targets.length ? { status: "unavailable", targets: [], message: "Using curated preview institutions." } : { status: "ready", targets }; } catch { return { status: "unavailable", targets: [], message: "Using curated preview institutions." }; }
 }
 
 export async function getCurrentIdentity(): Promise<ReviewIdentity | null> { if (import.meta.env.MODE === "test") return null; try { const { supabase } = await import("@repo/database"); const { data, error } = await supabase.auth.getUser(); return error || !data.user?.email ? null : { userId: data.user.id, email: data.user.email }; } catch { return null; } }

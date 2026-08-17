@@ -26,7 +26,7 @@ pnpm install
 pnpm --filter @repo/portal-universiti dev
 ```
 
-The UI runs without Supabase values by using validated local persistence and a representative university match set. To enable cross-device session writes and the live university catalogue, copy `.env.example` to `.env.local` in this directory and supply the browser-safe public values.
+The assessment draft can remain in validated local persistence before secure submission, but university and programme catalogue records are never replaced with local samples. Copy `.env.example` to `.env.local` in this directory and supply the browser-safe public values to read the shared live catalogue.
 
 The Vite configuration deliberately maps the established `NEXT_PUBLIC_SUPABASE_*` contract into the browser bundle. Do not add a service-role key.
 
@@ -43,7 +43,7 @@ Writes and authentication target:
 - `payments` for the no-charge checkout result.
 - Supabase Auth for parent and student email/password sign-up or login plus Google and Facebook OAuth when the shared client and providers are configured.
 
-University catalogue reads target `universities`. A local fallback keeps the prototype usable when public environment values or a reachable project are absent.
+University and programme catalogue reads target the public `shared_catalog_institutions` and `shared_catalog_programmes` views. If Supabase or either catalogue view is unavailable, the results page displays an explicit unavailable state and does not substitute mock data.
 
 ## Privacy and resilience
 

@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { authenticateStudentAccount, beginStudentOAuth } from "../lib/portal-data";
+import { LanguageProvider } from "../lib/language";
 import { createSessionRecord, readSession, saveSession } from "../lib/storage";
 import { StudentPortal } from "./StudentPortal";
 
@@ -23,6 +24,8 @@ const parentProfile = {
   income: "RM 6,000 - RM 9,999",
   email: "parent@example.com",
   studentEmail: "student@example.com",
+  studentAgeBand: "18+",
+  guardianConsentConfirmed: false,
   preferences: {
     campusVibe: "Public (IPTA) - Warm & Local",
     campusConcern: "Campus safety & physical well-being",
@@ -34,17 +37,19 @@ const parentProfile = {
 function renderStudent(id: string) {
   activeSessionId = id;
   return render(
-    <MemoryRouter initialEntries={[`/student/${id}?token=${invitationToken}`]} future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-      <Routes>
-        <Route path="student/:id" element={<StudentPortal />} />
-        <Route path="parent/:id" element={<h1>Parent notification handoff</h1>} />
-      </Routes>
-    </MemoryRouter>,
+    <LanguageProvider>
+      <MemoryRouter initialEntries={[`/student/${id}?token=${invitationToken}`]} future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+        <Routes>
+          <Route path="student/:id" element={<StudentPortal />} />
+          <Route path="parent/:id" element={<h1>Parent notification handoff</h1>} />
+        </Routes>
+      </MemoryRouter>
+    </LanguageProvider>,
   );
 }
 
 describe("student assessment wizard", () => {
-  beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.clearAllMocks(); });
+  beforeEach(() => { localStorage.clear(); localStorage.setItem("inpel-language", "en"); sessionStorage.clear(); vi.clearAllMocks(); });
 
   it("starts with the 16-question personality test and requires every answer", async () => {
     const user = userEvent.setup();

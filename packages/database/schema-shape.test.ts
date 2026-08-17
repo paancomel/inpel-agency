@@ -71,6 +71,10 @@ describe("blueprint row shapes", () => {
       preferred_location: MalaysianStudyLocation | null;
       monthly_household_income: MonthlyHouseholdIncome | null;
       parental_preferences: ParentalPreferences | null;
+      student_age_band: "15-17" | "18+" | null;
+      guardian_consent_given: boolean;
+      guardian_consent_recorded_at: Timestamp | null;
+      guardian_consent_declaration: string | null;
       status: "invited" | "completed";
     }>();
     expectTypeOf<Tables<"session_student_bindings">>().toEqualTypeOf<{

@@ -1,5 +1,6 @@
 import { ArrowRight, Building2, LockKeyhole, Mail } from "lucide-react";
 import { type FormEvent, useState } from "react";
+import { LegalLinks } from "@repo/ui";
 
 import { signInInstitution } from "../lib/database";
 import { canUseInstitutionDemo } from "../lib/runtime";
@@ -129,6 +130,7 @@ export function LoginView({ onAuthenticated }: LoginViewProps) {
             Access is limited to verified university representatives. Credentials are submitted
             directly to the shared authentication service and are never stored in this portal draft.
           </p>
+          <LegalLinks className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold text-navy underline underline-offset-4" />
         </div>
       </section>
     </main>

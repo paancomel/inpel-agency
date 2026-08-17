@@ -78,4 +78,11 @@ describe("INPELER portal routing", () => {
       await screen.findByRole("heading", { name: /institutional portal/i }),
     ).toBeInTheDocument();
   });
+
+  it("keeps legal documents public and links all available versions", () => {
+    renderApp("/legal/privacy");
+    expect(screen.getByText(/Privacy Policy and Personal Data Protection Notice/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Terms & Conditions" })).toHaveAttribute("href", "/legal/terms");
+    expect(screen.getByRole("link", { name: "Dasar Privasi (Bahasa Malaysia)" })).toHaveAttribute("href", "/legal/privacy-ms");
+  });
 });

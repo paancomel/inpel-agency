@@ -3,10 +3,14 @@ import { describe, expect, it } from "vitest";
 import {
   courseSchema,
   getPublishBlockers,
+  getWizardBlockers,
+  getWizardSteps,
+  institutionalEmailSchema,
+  isPublicEmailDomain,
   loginSchema,
   universityProfileSchema,
 } from "./validation";
-import { createEmptyCourse } from "./defaults";
+import { createEmptyCourse, createEmptyPortalDraft } from "./defaults";
 
 describe("INPELER validation contracts", () => {
   it("preserves the blueprint MQA error message", () => {
@@ -81,6 +85,16 @@ describe("INPELER validation contracts", () => {
     ).toBe("registrar@university.edu.my");
   });
 
+  it("rejects public email domains before submitting institutional credentials", () => {
+    expect(isPublicEmailDomain("registrar@gmail.com")).toBe(true);
+    expect(isPublicEmailDomain("registrar@university.edu.my")).toBe(false);
+    expect(institutionalEmailSchema.safeParse("registrar@yahoo.com").success).toBe(false);
+    expect(loginSchema.safeParse({
+      email: "registrar@outlook.com",
+      password: "correct-horse-battery-staple",
+    }).success).toBe(false);
+  });
+
   it("requires the database-backed university name", () => {
     const result = universityProfileSchema.safeParse({
       name: "",
@@ -98,5 +112,19 @@ describe("INPELER validation contracts", () => {
     expect(result.error?.flatten().fieldErrors.name).toContain(
       "Institution name is required.",
     );
+  });
+
+  it("requires every approved wizard component before publishing", () => {
+    const draft = createEmptyPortalDraft();
+    expect(getWizardSteps(draft)).toHaveLength(7);
+    expect(getWizardBlockers(draft)).toEqual([
+      "Complete institution identity, location, address, and official website.",
+      "Add an official institution email address and contact phone number.",
+      "Add at least one programme with complete MQA accreditation details.",
+      "Add published institution or programme fee information.",
+      "Add at least one facility with a verified image.",
+      "Add at least one public gallery image.",
+      "Confirm the institution accuracy attestation before publishing.",
+    ]);
   });
 });

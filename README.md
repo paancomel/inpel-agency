@@ -37,14 +37,35 @@ See `apps/portal-universiti/README.md` for its route map, offline behavior, priv
 
 ## Supabase configuration
 
-Copy `.env.example` into each future portal's supported local environment file and provide the project's public values:
+The database schema is versioned in
+`supabase/migrations/20260714024203_initial_schema.sql`. With Docker Desktop
+running, rebuild the local database from the migration and execute its pgTAP
+contract tests from the repository root:
 
-```dotenv
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```sh
+npx supabase start
+npx supabase db reset
+npx supabase test db
 ```
 
-The anonymous key is intended for browser use and is protected by Supabase Row Level Security. Never expose a service-role key through a `NEXT_PUBLIC_` variable.
+To deploy the migration to a hosted Supabase project, authenticate, replace
+`YOUR_PROJECT_REFERENCE_ID` with the reference shown in the project's dashboard
+URL, link the project, and push the pending migration:
+
+```sh
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REFERENCE_ID
+npx supabase db push
+```
+
+Copy `.env.example` to the repository root as `.env` and provide the project's public values. All three Vite portals read their browser-safe configuration from this one file:
+
+```dotenv
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+```
+
+The publishable key is intended for browser use and is protected by Supabase Row Level Security. Never expose a secret or service-role key through a `VITE_` or `NEXT_PUBLIC_` variable.
 
 After `@repo/database` has been built, applications can import the shared singleton, factory, helpers, and schema types from the package root:
 

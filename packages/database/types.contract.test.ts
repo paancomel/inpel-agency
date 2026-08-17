@@ -31,6 +31,15 @@ describe("database schema contract", () => {
       | "institution_audit_events"
       | "gallery_images"
       | "courses"
+      | "reference_institutions"
+      | "reference_institution_aliases"
+      | "nec_classifications"
+      | "reference_programmes"
+      | "reference_programme_aliases"
+      | "reference_programme_collaborations"
+      | "reference_institution_links"
+      | "reference_programme_links"
+      | "portal_catalog_visibility"
       | "sessions"
       | "session_student_bindings"
       | "report_access_grants"
@@ -52,6 +61,15 @@ describe("database schema contract", () => {
       "institution_audit_events",
       "gallery_images",
       "courses",
+      "reference_institutions",
+      "reference_institution_aliases",
+      "nec_classifications",
+      "reference_programmes",
+      "reference_programme_aliases",
+      "reference_programme_collaborations",
+      "reference_institution_links",
+      "reference_programme_links",
+      "portal_catalog_visibility",
       "sessions",
       "session_student_bindings",
       "report_access_grants",
@@ -65,7 +83,7 @@ describe("database schema contract", () => {
     ] as const satisfies readonly PublicTableName[];
 
     expectTypeOf<ExpectedPublicTableName>().toMatchTypeOf<PublicTableName>();
-    expect(tableNames).toHaveLength(19);
+    expect(tableNames).toHaveLength(28);
   });
 
   it("locks the public RPC signatures used by every portal", () => {
@@ -77,6 +95,8 @@ describe("database schema contract", () => {
       p_monthly_household_income: string;
       p_parental_preferences: import("./types.js").Json;
       p_parent_preferences: import("./types.js").Json;
+      p_student_age_band: string;
+      p_guardian_consent_confirmed: boolean;
     }>();
     expectTypeOf<Functions["revoke_parent_student_invitation"]["Args"]>().toEqualTypeOf<{
       p_session_id: string;

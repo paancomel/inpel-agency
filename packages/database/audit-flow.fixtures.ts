@@ -176,6 +176,8 @@ export function createAuditFixtures(): AuditFixtures {
     income: "RM 6,000 - RM 9,999",
     email: accounts.parent.email,
     studentEmail: accounts.student.email,
+    studentAgeBand: "18+",
+    guardianConsentConfirmed: false,
     preferences: {
       campusVibe: "Private (IPTS) - Modern & Vibrant",
       campusConcern: "Academic rigor & faculty quality",

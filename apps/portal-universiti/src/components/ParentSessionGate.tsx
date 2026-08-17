@@ -1,11 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 
+import { useLanguage } from "../lib/language";
 import { authenticateParentAccount, beginStudentOAuth, confirmCurrentParentOwnership, type AuthProvider, type StudentAuthMode } from "../lib/portal-data";
 import { ParentAuthGate } from "./ParentAuthGate";
 
 type GateState = "checking" | "required" | "allowed";
 
 export function ParentSessionGate({ sessionId, children }: { sessionId: string; children: ReactNode }) {
+  const { language } = useLanguage();
+  const checking = { ms: "Menyemak akaun ibu bapa…", en: "Checking the parent account…", ta: "பெற்றோர் கணக்கு சரிபார்க்கப்படுகிறது…", "zh-CN": "正在核验家长账户…" }[language];
   const [state, setState] = useState<GateState>("checking");
   const [error, setError] = useState("");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -52,7 +55,7 @@ export function ParentSessionGate({ sessionId, children }: { sessionId: string; 
   }
 
   if (state === "allowed") return <>{children}</>;
-  if (state === "checking") return <section className="grid min-h-[55vh] place-items-center px-4" role="status"><p className="font-bold text-forest">Checking the parent account…</p></section>;
+  if (state === "checking") return <section className="grid min-h-[55vh] place-items-center px-4" role="status"><p className="font-bold text-forest">{checking}</p></section>;
 
   return <section className="min-h-[65vh] bg-mist px-4 py-12 sm:px-6 sm:py-16"><ParentAuthGate isSubmitting={isAuthenticating} onAuthenticate={authenticate} /><p className="mx-auto mt-5 max-w-xl border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{error}</p></section>;
 }

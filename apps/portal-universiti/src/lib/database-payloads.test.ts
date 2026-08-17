@@ -9,6 +9,8 @@ const parent = {
   income: "RM 6,000 - RM 9,999",
   email: "parent@example.com",
   studentEmail: "student@example.com",
+  studentAgeBand: "18+",
+  guardianConsentConfirmed: false,
   preferences: {
     campusVibe: "Public (IPTA) - Warm & Local",
     campusConcern: "Campus safety & physical well-being",
@@ -48,6 +50,8 @@ describe("database payload builders", () => {
         independence: "Needs some structural guidance",
       },
       parent_preferences: parent,
+      student_age_band: "18+",
+      guardian_consent_given: false,
       status: "invited",
     });
   });

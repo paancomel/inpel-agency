@@ -32,4 +32,12 @@ describe("portal draft storage", () => {
 
     expect(loadPortalDraft()?.facilityImages).toEqual({});
   });
+
+  it("hydrates drafts saved before the wizard attestation was persisted", () => {
+    const legacyDraft = createEmptyPortalDraft();
+    delete (legacyDraft as Partial<typeof legacyDraft>).accuracyAttested;
+    localStorage.setItem(PORTAL_DRAFT_KEY, JSON.stringify(legacyDraft));
+
+    expect(loadPortalDraft()?.accuracyAttested).toBe(false);
+  });
 });

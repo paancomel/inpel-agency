@@ -7,6 +7,7 @@ const priorities = {
   location: "Selangor",
   income: "RM 6,000 - RM 9,999",
   studentEmail: "student@example.com",
+  studentAgeBand: "18+",
   preferences: {
     campusVibe: "Public (IPTA) - Warm & Local",
     campusConcern: "Campus safety & physical well-being",

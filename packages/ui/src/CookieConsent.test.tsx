@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { COOKIE_CONSENT_KEY, CookieConsent } from "./CookieConsent.js";
+import { COOKIE_CONSENT_CHANGED_EVENT, COOKIE_CONSENT_KEY, CookieConsent, OptionalTrackingGate } from "./CookieConsent.js";
 
 function renderConsent() {
   return render(
@@ -19,12 +19,12 @@ describe("CookieConsent", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows the consent choices and routes the privacy link to /legal", async () => {
+  it("shows the consent choices and routes the privacy link to the English notice", async () => {
     renderConsent();
 
     expect(await screen.findByRole("region", { name: "Cookie consent" })).toBeInTheDocument();
     expect(screen.getByText(/We use cookies and tracking technologies to improve your browsing experience/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Read our Privacy Policy" })).toHaveAttribute("href", "/legal");
+    expect(screen.getByRole("link", { name: "Read our Privacy Policy" })).toHaveAttribute("href", "/legal/privacy");
     expect(screen.getByRole("button", { name: "Accept All" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Essential Only" })).toBeInTheDocument();
   });
@@ -56,7 +56,30 @@ describe("CookieConsent", () => {
     expect(localStorage.getItem(COOKIE_CONSENT_KEY)).toBe("all");
     expect(screen.queryByRole("region", { name: "Cookie consent" })).not.toBeInTheDocument();
     expect(consentGranted).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Cookie settings" })).toBeInTheDocument();
     window.removeEventListener("consentGranted", consentGranted);
+  });
+
+  it("keeps optional integrations gated until opt-in and unmounts them when consent is withdrawn", async () => {
+    const user = userEvent.setup();
+    const changed = vi.fn();
+    window.addEventListener(COOKIE_CONSENT_CHANGED_EVENT, changed);
+    render(
+      <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+        <CookieConsent />
+        <OptionalTrackingGate><div>Optional vendor loader</div></OptionalTrackingGate>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText("Optional vendor loader")).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: "Accept All" }));
+    expect(await screen.findByText("Optional vendor loader")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cookie settings" }));
+    await user.click(screen.getByRole("button", { name: "Essential Only" }));
+    expect(screen.queryByText("Optional vendor loader")).not.toBeInTheDocument();
+    expect(changed).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { choice: "essential", optionalTrackingAllowed: false } }));
+    window.removeEventListener(COOKIE_CONSENT_CHANGED_EVENT, changed);
   });
 
   it("stores essential consent and hides without granting advertising consent", async () => {

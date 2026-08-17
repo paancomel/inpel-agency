@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import {
@@ -9,6 +9,10 @@ import {
   CourseTextarea,
   type CourseStringField,
 } from "../components/CourseFormFields";
+import {
+  listSharedCatalogProgrammes,
+  type SharedCatalogProgramme,
+} from "../lib/catalog";
 import { createEmptyCourse } from "../lib/defaults";
 import { courseSchema } from "../lib/validation";
 import { usePortal } from "../state/usePortal";
@@ -27,6 +31,26 @@ export function CourseFormPage() {
   const existingCourse = draft.courses.find((item) => item.id === requestedId);
   const [course, setCourse] = useState<Course>(() => existingCourse ?? createEmptyCourse());
   const [errors, setErrors] = useState<CourseErrors>({});
+  const [catalogProgrammes, setCatalogProgrammes] = useState<SharedCatalogProgramme[]>([]);
+  const [catalogStatus, setCatalogStatus] = useState<"loading" | "available" | "unavailable">("loading");
+
+  useEffect(() => {
+    let isActive = true;
+
+    void listSharedCatalogProgrammes(draft.profile.name)
+      .then((programmes) => {
+        if (!isActive) return;
+        setCatalogProgrammes(programmes);
+        setCatalogStatus(programmes.length > 0 ? "available" : "unavailable");
+      })
+      .catch(() => {
+        if (isActive) setCatalogStatus("unavailable");
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [draft.profile.name]);
 
   function updateField(field: CourseStringField, value: string) {
     setCourse((current) => ({ ...current, [field]: value }));
@@ -58,6 +82,11 @@ export function CourseFormPage() {
 
       <form className="mt-9 space-y-6" noValidate onSubmit={handleSubmit}>
         <CourseSection description="Accreditation, delivery, entry requirements, and industry relevance." eyebrow="01" id="course-academic" title="Academic">
+          <div className="mb-5">
+            <label className="block" htmlFor="catalog-programme"><span className="field-label">Live accredited programme catalog</span><select className="field-control mt-2 bg-mist/50" disabled={catalogStatus !== "available"} id="catalog-programme" onChange={(event) => { const selected = catalogProgrammes.find((programme) => programme.canonicalRecordId === event.target.value); if (!selected) return; setCourse((current) => ({ ...current, name: selected.qualificationName, mqaCode: selected.referenceNo })); setErrors((current) => { const next = { ...current }; delete next.name; delete next.mqaCode; return next; }); }} value={catalogProgrammes.find((programme) => programme.qualificationName === course.name && programme.referenceNo === course.mqaCode)?.canonicalRecordId ?? ""}><option value="">Select an accredited programme for {draft.profile.name || "the institution"}</option>{catalogProgrammes.map((programme) => <option key={programme.canonicalRecordId} value={programme.canonicalRecordId}>{programme.qualificationName} · {programme.referenceNo} · NEC {programme.necCode}</option>)}</select></label>
+            {catalogStatus === "loading" ? <p className="mt-2 text-sm text-slate-500" role="status">Loading the live programme catalog…</p> : null}
+            {catalogStatus === "unavailable" ? <p className="mt-2 border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900" role="alert">No live accredited programme catalog is available for this institution. No placeholder programme data is shown.</p> : null}
+          </div>
           <div className="grid gap-5 md:grid-cols-2">
             <CourseInput error={errors.name} field="name" label="Course Name *" onChange={updateField} placeholder="Bachelor of Computing" value={course.name} />
             <CourseInput error={errors.facultySchool} field="facultySchool" label="Faculty/School *" onChange={updateField} placeholder="Faculty of Computing" value={course.facultySchool} />

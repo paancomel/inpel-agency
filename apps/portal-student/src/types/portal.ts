@@ -67,8 +67,20 @@ export interface PortalDraft {
   facilities: FacilityFlags;
   facilityImages: FacilityImages;
   gallery: GalleryImage[];
+  accuracyAttested: boolean;
   courses: Course[];
   updatedAt: string;
+}
+
+type ImportPatch<T> = { [Key in keyof T]?: T[Key] | undefined };
+
+export interface InstitutionImportPayload {
+  profile?: ImportPatch<UniversityProfile> | undefined;
+  facilities?: ImportPatch<FacilityFlags> | undefined;
+  facilityImages?: FacilityImages | undefined;
+  gallery?: Array<Omit<GalleryImage, "id">> | undefined;
+  courses?: Array<Omit<Course, "id">> | undefined;
+  accuracyAttested?: boolean | undefined;
 }
 
 export type PublishMode = "cloud" | "demo";

@@ -1,9 +1,13 @@
 import { ArrowRight, ImagePlus, MapPin, Trash2 } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { SecureImageUpload } from "../components/SecureImageUpload";
 import { ToastNotification } from "../components/ToastNotification";
+import {
+  listSharedCatalogInstitutions,
+  type SharedCatalogInstitution,
+} from "../lib/catalog";
 import { galleryImageSchema, universityProfileSchema } from "../lib/validation";
 import { usePortal } from "../state/usePortal";
 import { FACILITIES, type FacilityKey, type UniversityProfile } from "../types/portal";
@@ -43,7 +47,27 @@ export function GlobalProfilePage() {
   const [imageError, setImageError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [selectedFacility, setSelectedFacility] = useState<FacilityKey | "">("");
+  const [catalogInstitutions, setCatalogInstitutions] = useState<SharedCatalogInstitution[]>([]);
+  const [catalogStatus, setCatalogStatus] = useState<"loading" | "available" | "unavailable">("loading");
   const selectedFacilityDefinition = FACILITIES.find(({ key }) => key === selectedFacility);
+
+  useEffect(() => {
+    let isActive = true;
+
+    void listSharedCatalogInstitutions()
+      .then((institutions) => {
+        if (!isActive) return;
+        setCatalogInstitutions(institutions);
+        setCatalogStatus(institutions.length > 0 ? "available" : "unavailable");
+      })
+      .catch(() => {
+        if (isActive) setCatalogStatus("unavailable");
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   function handleProfileChange(name: keyof UniversityProfile, value: string) {
     updateProfile({ [name]: value });
@@ -82,6 +106,11 @@ export function GlobalProfilePage() {
       <div className="space-y-10">
         <section className="section-card" aria-labelledby="identity-heading">
           <div className="section-heading"><span className="section-number">01</span><div><h3 id="identity-heading">Institution details</h3><p>The primary identity and location shown throughout INPELER.</p></div></div>
+          <div className="mb-5">
+            <label className="block" htmlFor="catalog-institution"><span className="field-label">Live institution catalog</span><select className="field-control mt-2 bg-mist/50" disabled={catalogStatus !== "available"} id="catalog-institution" onChange={(event) => { const selected = catalogInstitutions.find((institution) => institution.referenceInstitutionId === event.target.value); if (selected) handleProfileChange("name", selected.institutionName); }} value={catalogInstitutions.find((institution) => institution.institutionName === draft.profile.name)?.referenceInstitutionId ?? ""}><option value="">Select the verified institution record</option>{catalogInstitutions.map((institution) => <option key={institution.referenceInstitutionId} value={institution.referenceInstitutionId}>{institution.institutionName} ({institution.programmeCount} programmes)</option>)}</select></label>
+            {catalogStatus === "loading" ? <p className="mt-2 text-sm text-slate-500" role="status">Loading the live institution catalog…</p> : null}
+            {catalogStatus === "unavailable" ? <p className="mt-2 border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900" role="alert">The live institution catalog is unavailable. No placeholder institution data is shown.</p> : null}
+          </div>
           <div className="grid gap-5 md:grid-cols-2">
             <TextField error={errors.name} label="Institution name *" name="name" onChange={handleProfileChange} placeholder="Universiti Contoh Malaysia" value={draft.profile.name} />
             <TextField error={errors.location} label="City / state" name="location" onChange={handleProfileChange} placeholder="Kuala Lumpur" value={draft.profile.location} />

@@ -2,6 +2,7 @@ import { type PropsWithChildren, useEffect, useMemo, useState } from "react";
 
 import { createEmptyPortalDraft } from "../lib/defaults";
 import { restoreInstitutionSession, signOutInstitution } from "../lib/database";
+import { applyInstitutionImport } from "../lib/import";
 import { loadPortalDraft, savePortalDraft } from "../lib/storage";
 import type {
   FacilityKey,
@@ -66,6 +67,12 @@ export function PortalProvider({ children }: PropsWithChildren) {
         }
       },
       setPublishResult,
+      setAccuracyAttested: (value) => {
+        setDraft((current) => ({ ...current, accuracyAttested: value, updatedAt: new Date().toISOString() }));
+      },
+      importDraft: (payload) => {
+        setDraft((current) => applyInstitutionImport(current, payload));
+      },
       updateProfile: (patch) => {
         setDraft((current) => ({
           ...current,

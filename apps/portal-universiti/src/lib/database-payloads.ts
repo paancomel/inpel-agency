@@ -34,6 +34,8 @@ export function buildParentSessionPayload(session: SessionRecord): TablesInsert<
     monthly_household_income: session.parent.income,
     parental_preferences: preferences,
     parent_preferences: asJson(session.parent),
+    student_age_band: session.parent.studentAgeBand,
+    guardian_consent_given: session.parent.guardianConsentConfirmed,
     status: session.status,
   };
 }

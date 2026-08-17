@@ -13,9 +13,10 @@ vi.mock("../lib/portal-data", () => ({
   confirmCurrentParentOwnership: vi.fn(),
   grantDemoReportAccess: vi.fn(),
   getAuthorizedReport: vi.fn(),
+  getSharedCatalog: vi.fn(),
 }));
 
-import { confirmCurrentParentOwnership, getAuthorizedReport, grantDemoReportAccess } from "../lib/portal-data";
+import { confirmCurrentParentOwnership, getAuthorizedReport, getSharedCatalog, grantDemoReportAccess } from "../lib/portal-data";
 
 function renderRoute(path: string) {
   return render(<MemoryRouter initialEntries={[path]} future={{ v7_relativeSplatPath: true, v7_startTransition: true }}><Routes><Route path="checkout/:id" element={<Checkout />} /><Route path="results/:id" element={<Results />} /><Route path="parent/:id" element={<h1>Parent sign-in</h1>} /></Routes></MemoryRouter>);
@@ -25,6 +26,7 @@ describe("server-authoritative demo report access", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    vi.mocked(getSharedCatalog).mockRejectedValue(new Error("Shared university catalogue is unavailable."));
   });
 
   it("does not unlock results when localStorage claims a successful payment", async () => {
@@ -76,5 +78,48 @@ describe("server-authoritative demo report access", () => {
     expect(await screen.findByRole("heading", { name: "Server University" })).toBeInTheDocument();
     expect(screen.getByText(/approved server-side matching method/i)).toBeInTheDocument();
     expect(screen.queryByText(/universiti teknologi malaysia/i)).not.toBeInTheDocument();
+  });
+
+  it("renders programme records from the shared catalogue without a local fallback", async () => {
+    vi.mocked(getAuthorizedReport).mockResolvedValue({ sessionId, payload: { session_id: sessionId } });
+    vi.mocked(getSharedCatalog).mockResolvedValue({
+      institutions: [{
+        referenceInstitutionId: "institution-1",
+        institutionName: "Universiti Data Sebenar",
+        institutionPreviousName: null,
+        universityId: null,
+        isLinkedToUniversity: false,
+        programmeCount: 1,
+      }],
+      programmes: [{
+        referenceInstitutionId: "institution-1",
+        institutionName: "Universiti Data Sebenar",
+        canonicalRecordId: "programme-1",
+        referenceNo: "MQA/FA0001",
+        referenceFamily: "MQA",
+        qualificationName: "Diploma Sains Data",
+        previousQualificationName: null,
+        necCode: "0613",
+        necDescription: "Software and applications development and analysis",
+        necBroadArea: "Information and Communication Technologies",
+        courseId: null,
+        isLinkedToCourse: false,
+      }],
+    });
+
+    renderRoute(`/results/${sessionId}`);
+
+    expect(await screen.findByRole("heading", { name: "Diploma Sains Data" })).toBeInTheDocument();
+    expect(screen.getByText("Universiti Data Sebenar")).toBeInTheDocument();
+    expect(screen.getByText("MQA/FA0001")).toBeInTheDocument();
+  });
+
+  it("shows an unavailable state instead of sample catalogue records", async () => {
+    vi.mocked(getAuthorizedReport).mockResolvedValue({ sessionId, payload: { session_id: sessionId } });
+
+    renderRoute(`/results/${sessionId}`);
+
+    expect(await screen.findByRole("heading", { name: /shared catalogue is unavailable/i })).toBeInTheDocument();
+    expect(screen.getByText(/no sample university or programme data has been substituted/i)).toBeInTheDocument();
   });
 });

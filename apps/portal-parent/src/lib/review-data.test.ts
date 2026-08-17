@@ -14,5 +14,14 @@ describe("review data adapter", () => {
   it("uses the server moderation contract", () => {
     const submission = createReviewSubmission(draft);
     expect(submission).toMatchObject({ universityId: "taylors", isAnonymous: true });
+    expect(submission.reviewData).toMatchObject({
+      declarations: {
+        version: "inpolor-review-v1",
+        age18OrOlder: true,
+        termsAccepted: true,
+        privacyAcknowledged: true,
+        contentRightsConfirmed: true,
+      },
+    });
   });
 });
