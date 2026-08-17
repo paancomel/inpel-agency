@@ -75,11 +75,19 @@ select ok(
 );
 
 select ok(
-  not has_table_privilege('authenticated', 'public.reviews', 'select')
+  has_table_privilege('authenticated', 'public.reviews', 'select')
+  and not has_table_privilege('anon', 'public.reviews', 'select')
   and not has_table_privilege('authenticated', 'public.reviews', 'insert')
   and not has_table_privilege('authenticated', 'public.reviews', 'update')
-  and not has_table_privilege('authenticated', 'public.reviews', 'delete'),
-  'raw reviews stay inaccessible until the moderated projection is available'
+  and not has_table_privilege('authenticated', 'public.reviews', 'delete')
+  and exists (
+    select 1 from pg_policies
+     where schemaname = 'public'
+       and tablename = 'reviews'
+       and policyname = 'reviews_owner_or_content_moderator_read'
+       and cmd = 'SELECT'
+  ),
+  'raw reviews are readable only through owner-or-moderator RLS and are not directly mutable'
 );
 
 select ok(
