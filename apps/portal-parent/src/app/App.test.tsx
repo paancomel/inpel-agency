@@ -49,6 +49,22 @@ describe("INPOLOR public experience", () => {
     expect(screen.getByText("Please select your year")).toBeInTheDocument();
   });
 
+  it("returns a field error instead of crashing when only the institution is missing", async () => {
+    const user = userEvent.setup();
+    renderPortal("/submit-review");
+    await screen.findByRole("option", { name: /Universiti Data Sebenar/ });
+
+    await user.type(screen.getByLabelText("Course"), "Diploma Teknologi Maklumat");
+    await user.selectOptions(
+      screen.getByLabelText("Calendar year studied"),
+      String(new Date().getFullYear()),
+    );
+    await user.click(screen.getByRole("button", { name: /Continue/ }));
+
+    expect(screen.getByText("Choose an institution")).toBeInTheDocument();
+    expect(screen.getByText("STEP 1 OF 5")).toBeInTheDocument();
+  });
+
   it("serves legal documents and exposes all footer legal links", () => {
     renderPortal("/legal/privacy-ms");
     expect(screen.getByText(/Dasar Privasi dan Notis Perlindungan Data Peribadi/)).toBeInTheDocument();
