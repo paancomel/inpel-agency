@@ -61,7 +61,7 @@ describe("INPOLOR public experience", () => {
     );
     await user.click(screen.getByRole("button", { name: /Continue/ }));
 
-    expect(screen.getByText("Choose an institution")).toBeInTheDocument();
+    expect(screen.getByText("Choose an institution", { selector: "small.field-error" })).toBeInTheDocument();
     expect(screen.getByText("STEP 1 OF 5")).toBeInTheDocument();
   });
 
