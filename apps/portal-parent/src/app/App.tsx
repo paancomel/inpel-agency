@@ -106,12 +106,13 @@ export function PortalRoutes() {
 
   useEffect(() => {
     if (!identity) return;
-    setOnboardingError(null);
-    void completeCommunityOnboarding().catch((reason) => {
-      setOnboardingError(reason instanceof Error
-        ? reason.message
-        : "Your community age verification could not be completed.");
-    });
+    void completeCommunityOnboarding()
+      .then(() => setOnboardingError(null))
+      .catch((reason) => {
+        setOnboardingError(reason instanceof Error
+          ? reason.message
+          : "Your community age verification could not be completed.");
+      });
     void loadCloudSaves(identity.userId).then(setSaved).catch(() => setSaved([]));
   }, [identity]);
 
