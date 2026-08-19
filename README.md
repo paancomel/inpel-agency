@@ -1,5 +1,9 @@
 # Agency Web monorepo
 
+> [!IMPORTANT]
+> INPOLOR relaunch work is governed by the approved [INPOLOR Relaunch Master Directive](docs/inpolor-relaunch/MASTER_DIRECTIVE.md). Current-state facts must still be verified against code, migrations, and deployed environments. Approved interpretations or deviations must be recorded in the [decision log](docs/inpolor-relaunch/04_DECISION_LOG.md), and execution status is maintained in the [task board](docs/inpolor-relaunch/TASK_BOARD.md).
+
+
 University portal workspace with a production-ready INPEL parent/student matching SPA and centralized Supabase access in `packages/database`.
 
 ## Workspace layout
