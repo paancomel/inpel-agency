@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import type { InstitutionImportPayload, PortalDraft } from "../types/portal";
+import type {
+  InstitutionImportPayload,
+  PendingUniversityAssets,
+  PortalDraft,
+} from "../types/portal";
 
 const optionalTrimmedString = z.string().max(2_000).trim();
 const optionalNumericString = z
@@ -50,35 +54,25 @@ export const universityProfileSchema = z.object({
   name: z.string().trim().min(1, "Institution name is required.").max(200),
   location: z.string().trim().max(200),
   address: z.string().trim().max(500),
-  website: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || z.url().safeParse(value).success, {
-      message: "Enter a complete website URL, including https://.",
-    }),
-  contactEmail: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || z.email().safeParse(value).success, {
-      message: "Enter a valid contact email address.",
-    }),
+  website: z.string().trim().refine(
+    (value) => value === "" || z.url().safeParse(value).success,
+    { message: "Enter a complete website URL, including https://." },
+  ),
+  contactEmail: z.string().trim().refine(
+    (value) => value === "" || z.email().safeParse(value).success,
+    { message: "Enter a valid contact email address." },
+  ),
   contactPhone: z.string().trim().max(40),
-  logoUrl: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || z.url().safeParse(value).success, {
-      message: "Enter a complete logo URL, including https://.",
-    }),
+  logoUrl: z.string().trim().refine(
+    (value) => value === "" || z.url().safeParse(value).success,
+    { message: "Enter a complete logo URL, including https://." },
+  ),
   tuitionFees: optionalNumericString,
-  acceptanceRate: z
-    .string()
-    .trim()
-    .refine(
-      (value) =>
-        value === "" ||
-        (/^\d+(?:\.\d{1,2})?$/.test(value) && Number(value) >= 0 && Number(value) <= 100),
-      { message: "Acceptance rate must be between 0 and 100." },
-    ),
+  acceptanceRate: z.string().trim().refine(
+    (value) => value === ""
+      || (/^\d+(?:\.\d{1,2})?$/.test(value) && Number(value) >= 0 && Number(value) <= 100),
+    { message: "Acceptance rate must be between 0 and 100." },
+  ),
 });
 
 const universityProfileDraftSchema = z.object({
@@ -180,15 +174,8 @@ export function getPublishBlockers(
   isAttested: boolean,
 ): string[] {
   const blockers: string[] = [];
-
-  if (courses.length === 0) {
-    blockers.push("Add at least one programme before publishing.");
-  }
-
-  if (!isAttested) {
-    blockers.push("Confirm the institution accuracy attestation before publishing.");
-  }
-
+  if (courses.length === 0) blockers.push("Add at least one programme before publishing.");
+  if (!isAttested) blockers.push("Confirm the institution accuracy attestation before publishing.");
   return blockers;
 }
 
@@ -198,14 +185,19 @@ export type WizardStep = {
   complete: boolean;
 };
 
-export function getWizardSteps(draft: PortalDraft): WizardStep[] {
+export function getWizardSteps(
+  draft: PortalDraft,
+  pendingAssets: PendingUniversityAssets = { logo: null, facilities: {} },
+): WizardStep[] {
   const profile = draft.profile;
   const hasValidProgramme = draft.courses.length > 0
     && draft.courses.every((course) => courseSchema.safeParse(course).success);
   const hasProgrammeFee = draft.courses.some((course) => course.totalBaseTuitionFee.trim() !== "");
-  const hasFacilityImage = Object.entries(draft.facilities).some(
-    ([key, enabled]) => enabled && Boolean(draft.facilityImages[key as keyof typeof draft.facilities]),
-  );
+  const hasFacilityImage = Object.entries(draft.facilities).some(([key, enabled]) => {
+    if (!enabled) return false;
+    const facilityKey = key as keyof typeof draft.facilities;
+    return Boolean(draft.facilityImages[facilityKey] || pendingAssets.facilities[facilityKey]);
+  });
 
   return [
     { id: "identity", label: "Identity and location", complete: Boolean(profile.name && profile.location && profile.address && profile.website) },
@@ -218,7 +210,10 @@ export function getWizardSteps(draft: PortalDraft): WizardStep[] {
   ];
 }
 
-export function getWizardBlockers(draft: PortalDraft): string[] {
+export function getWizardBlockers(
+  draft: PortalDraft,
+  pendingAssets: PendingUniversityAssets = { logo: null, facilities: {} },
+): string[] {
   const blockerCopy: Record<WizardStep["id"], string> = {
     identity: "Complete institution identity, location, address, and official website.",
     contacts: "Add an official institution email address and contact phone number.",
@@ -228,5 +223,7 @@ export function getWizardBlockers(draft: PortalDraft): string[] {
     gallery: "Add at least one public gallery image.",
     accuracy: "Confirm the institution accuracy attestation before publishing.",
   };
-  return getWizardSteps(draft).filter((step) => !step.complete).map((step) => blockerCopy[step.id]);
+  return getWizardSteps(draft, pendingAssets)
+    .filter((step) => !step.complete)
+    .map((step) => blockerCopy[step.id]);
 }

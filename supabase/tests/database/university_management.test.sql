@@ -8,7 +8,7 @@ select has_column(
   'public',
   'universities',
   'representative_id',
-  'universities link each managed profile to its representative'
+  'universities retain the legacy representative link during membership migration'
 );
 
 select col_is_fk(
@@ -58,12 +58,12 @@ select policies_are(
   'public',
   'universities',
   array[
-    'universities_owner_delete',
-    'universities_owner_insert',
-    'universities_owner_update',
-    'universities_public_read'
+    'universities_public_read',
+    'universities_member_delete',
+    'universities_member_update',
+    'universities_owner_insert'
   ],
-  'universities expose public reads and owner-scoped writes'
+  'universities expose public reads, controlled creation, and membership writes'
 );
 
 select policies_are(
@@ -104,7 +104,7 @@ select policies_are(
   'public',
   'profiles',
   array['profiles_select_own_or_admin'],
-  'profiles do not retain a broad browser update policy'
+  'profiles do not retain broad browser write policies'
 );
 
 select * from finish();

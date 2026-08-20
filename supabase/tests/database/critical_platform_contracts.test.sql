@@ -1,0 +1,263 @@
+begin;
+
+set local search_path = public, extensions;
+
+select plan(24);
+
+select has_table(
+  'private',
+  'review_declaration_receipts',
+  'canonical private review declaration receipts exist'
+);
+
+select is(
+  (select relrowsecurity from pg_class where oid = 'private.review_declaration_receipts'::regclass),
+  true,
+  'declaration receipts enforce RLS'
+);
+
+select ok(
+  not has_table_privilege('anon', 'private.review_declaration_receipts', 'select')
+  and not has_table_privilege('authenticated', 'private.review_declaration_receipts', 'select'),
+  'browser roles cannot read declaration receipts'
+);
+
+select is(
+  (select relrowsecurity from pg_class where oid = 'private.reference_import_runs'::regclass),
+  true,
+  'private reference import ledger enforces RLS'
+);
+
+select is(
+  coalesce((select reloptions @> array['security_invoker=true']
+    from pg_class where oid = 'public.shared_catalog_institutions'::regclass), false),
+  true,
+  'shared institution catalogue uses caller permissions'
+);
+
+select is(
+  coalesce((select reloptions @> array['security_invoker=true']
+    from pg_class where oid = 'public.shared_catalog_programmes'::regclass), false),
+  true,
+  'shared programme catalogue uses caller permissions'
+);
+
+select is(
+  coalesce((select reloptions @> array['security_invoker=true']
+    from pg_class where oid = 'public.inpolor_catalog_institutions'::regclass), false),
+  true,
+  'INPOLOR institution catalogue uses caller permissions'
+);
+
+select is(
+  coalesce((select reloptions @> array['security_invoker=true']
+    from pg_class where oid = 'public.inpolor_catalog_programmes'::regclass), false),
+  true,
+  'INPOLOR programme catalogue uses caller permissions'
+);
+
+select results_eq(
+  $$
+    select (tablename || '.' || policyname)::text COLLATE "C"
+      from pg_policies
+     where schemaname = 'public'
+       and policyname in (
+         'reference_institutions_catalog_read',
+         'reference_programmes_catalog_read',
+         'nec_classifications_catalog_read',
+         'reference_institution_links_catalog_read',
+         'reference_programme_links_catalog_read',
+         'portal_catalog_visibility_public_read'
+       )
+     order by tablename, policyname
+  $$,
+  $$
+    values
+      ('nec_classifications.nec_classifications_catalog_read'::text COLLATE "C"),
+      ('portal_catalog_visibility.portal_catalog_visibility_public_read'::text COLLATE "C"),
+      ('reference_institution_links.reference_institution_links_catalog_read'::text COLLATE "C"),
+      ('reference_institutions.reference_institutions_catalog_read'::text COLLATE "C"),
+      ('reference_programme_links.reference_programme_links_catalog_read'::text COLLATE "C"),
+      ('reference_programmes.reference_programmes_catalog_read'::text COLLATE "C")
+  $$,
+  'catalogue RLS policies expose only linked and published public-safe rows'
+);
+
+select results_eq(
+  $$
+    select policyname::text
+      from pg_policies
+     where schemaname = 'public'
+       and policyname in (
+         'reference_institutions_public_catalog_read',
+         'reference_programmes_public_catalog_read',
+         'nec_classifications_public_catalog_read',
+         'reference_institution_links_verified_read',
+         'reference_programme_links_verified_read',
+         'portal_catalog_visibility_published_read'
+       )
+  $$,
+  $$ select null::text where false $$,
+  'broad draft catalogue policies are absent'
+);
+
+select ok(
+  position('mainExperience' in pg_get_functiondef(
+    'private.sync_inpolor_review_projection()'::regprocedure
+  )) > 0,
+  'review projection reads the structured main experience'
+);
+
+select ok(
+  position('update public.reviews set status=''hidden_under_review''' in pg_get_functiondef(
+    'public.report_inpolor_content(text,uuid,text,text)'::regprocedure
+  )) = 0,
+  'one report does not automatically hide a review'
+);
+
+select ok(
+  position('has_unlocked_tea = true' in pg_get_functiondef(
+    'public.moderate_inpolor_review(uuid,text,text)'::regprocedure
+  )) > 0,
+  'moderator publication unlocks protected excerpts'
+);
+
+select ok(
+  exists (
+    select 1
+      from pg_trigger
+     where tgrelid = 'public.profiles'::regclass
+       and tgname = 'profiles_require_published_review_for_unlock'
+       and not tgisinternal
+  )
+  and position('status = ''published''' in pg_get_functiondef(
+    'private.enforce_inpolor_unlock_evidence()'::regprocedure
+  )) > 0,
+  'all unlock writes require an owned published review'
+);
+
+select ok(
+  position('inpolor-launch-2026-08-16' in pg_get_functiondef(
+    'public.submit_inpolor_review(jsonb)'::regprocedure
+  )) > 0
+  and position('inpolor-review-v1' in pg_get_functiondef(
+    'public.submit_inpolor_review(jsonb)'::regprocedure
+  )) = 0,
+  'review submission uses one current declaration version'
+);
+
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.submit_inpolor_review(jsonb)',
+    'EXECUTE'
+  )
+  and has_function_privilege(
+    'authenticated',
+    'public.submit_inpolor_review(jsonb)',
+    'EXECUTE'
+  ),
+  'review submission is authenticated-only'
+);
+
+select ok(
+  position('coalesce(date_of_birth, p_date_of_birth)' in pg_get_functiondef(
+    'public.complete_inpolor_community_onboarding(date,text)'::regprocedure
+  )) > 0,
+  'existing cross-portal profiles may set birth date once'
+);
+
+select ok(
+  to_regprocedure(
+    'public.create_parent_student_invitation(text,text,text,jsonb,jsonb,text,boolean)'
+  ) is not null,
+  'strict parent invitation wrapper is installed'
+);
+
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.create_parent_student_invitation_guardian_validated(text,text,text,jsonb,jsonb,text,boolean)',
+    'EXECUTE'
+  ),
+  'guardian-validated invitation implementation is not a browser endpoint'
+);
+
+select throws_ok(
+  $$
+    select public.create_parent_student_invitation(
+      'student@example.test',
+      'Selangor',
+      'RM 6,000 - RM 9,999',
+      '{}'::jsonb,
+      '{}'::jsonb,
+      '18+',
+      false
+    )
+  $$,
+  '22023',
+  'Every parent preference is required.',
+  'partial parent preference payloads are rejected before invitation creation'
+);
+
+select throws_ok(
+  $$
+    select public.create_parent_student_invitation(
+      'student@example.test',
+      'Selangor',
+      'RM 6,000 - RM 9,999',
+      jsonb_build_object(
+        'campus_vibe', null,
+        'campus_concern', 'Campus safety & physical well-being',
+        'ultimate_win', 'Guaranteed high-paying employment',
+        'independence', 'Needs some structural guidance'
+      ),
+      jsonb_build_object(
+        'campusVibe', null,
+        'campusConcern', 'Campus safety & physical well-being',
+        'ultimateWin', 'Guaranteed high-paying employment',
+        'independence', 'Needs some structural guidance'
+      ),
+      '18+',
+      false
+    )
+  $$,
+  '22023',
+  'Parent preferences contain an unsupported value.',
+  'present-but-null parent preference values are rejected'
+);
+
+select ok(
+  not (
+    select p.prosecdef
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.proname = 'get_institution_entitlement'
+       and pg_get_function_identity_arguments(p.oid) = 'p_university_id uuid'
+  ),
+  'public entitlement lookup does not bypass RLS'
+);
+
+select has_index(
+  'public',
+  'published_reviews',
+  'published_reviews_university_visibility_idx',
+  'public review lookups have a covering university and visibility index'
+);
+
+select results_eq(
+  $$
+    select indexname::text
+      from pg_indexes
+     where schemaname = 'public'
+       and tablename = 'published_reviews'
+       and indexname = 'published_reviews_university_visibility_published_idx'
+  $$,
+  $$ select null::text where false $$,
+  'duplicate public review lookup index is absent'
+);
+
+select * from finish();
+
+rollback;
