@@ -3,89 +3,61 @@
 **Scope:** authorized staging project `xrmrhjgkttxzvwdsjazs` only  
 **Rule:** do not run a blind `supabase db push` while local and remote history differ.
 
-## Why reconciliation is required
+## Resolution
 
-The repository and staging contain equivalent August 16–17 contract changes under different migration versions. Staging also contains several execution-time versions that were not represented by files in `main`. REL-007 adds no-op history mirrors for those already-applied remote versions and one final idempotent convergence migration.
-
-## Local versions already represented by equivalent staging objects
-
-Mark these repository versions as applied on staging only after the read-only object checks below pass:
+The repository previously stored two August 16 migrations under versions that staging never recorded:
 
 ```text
 20260816130000  inpel_parent_guardian_consent
 20260816130100  inpolor_review_declaration_audit
 ```
 
-Do not mark `20260820043600` as applied. That is the real REL-007 convergence migration and must execute normally.
-
-## Remote history mirrors added to the repository
+Staging contains the equivalent changes under its actual recorded versions:
 
 ```text
 20260817111316  inpel_parent_guardian_consent
 20260817111334  inpolor_review_declaration_audit
-20260817111420  inpolor_review_declaration_audit
-20260817111423  fix_inpolor_declaration_return_contract
-20260817111541  critical_platform_contracts_staging
-20260817111548  reject_null_parent_preferences
-20260817111553  remove_legacy_profile_policies
-20260817111604  enforce_approved_unspoken_unlock
-20260817111617  remove_legacy_representative_policies
-20260817111630  catalog_security_invoker_views
-20260817111638  remove_remaining_legacy_rls_policies
-20260817111729  catalog_read_policies_for_security_invoker_views
 ```
 
-These files intentionally contain no schema mutation. They make a clean local rebuild aware of staging’s recorded versions; the final REL-007 migration owns the converged end state.
+REL-007 moves the real migration bodies to those recorded staging versions and removes the unrecorded repository versions. This is deliberate history convergence, not a schema rollback. Fresh local rebuilds still execute the real guardian-consent and declaration migrations; linked staging correctly treats them as already applied.
 
-## Required pre-repair checks
+## Remote history represented in the repository
 
-Run read-only checks first and retain their output in the PR:
-
-```sql
-select to_regprocedure(
-  'public.create_parent_student_invitation(text,text,text,jsonb,jsonb,text,boolean)'
-) is not null as guardian_contract_present;
-
-select to_regclass('private.review_declaration_receipts') is not null
-  as declaration_receipt_present;
-
-select to_regprocedure('public.submit_inpolor_review(jsonb)') is not null
-  as review_submission_present;
-
-select table_name, column_name
-from information_schema.columns
-where table_schema = 'public'
-  and table_name = 'sessions'
-  and column_name in (
-    'student_age_band',
-    'guardian_consent_given',
-    'guardian_consent_recorded_at',
-    'guardian_consent_declaration'
-  )
-order by column_name;
+```text
+20260817111316  inpel_parent_guardian_consent — real migration body
+20260817111334  inpolor_review_declaration_audit — real migration body
+20260817111420  inpolor_review_declaration_audit — history mirror
+20260817111423  fix_inpolor_declaration_return_contract — history mirror
+20260817111541  critical_platform_contracts_staging — history mirror
+20260817111548  reject_null_parent_preferences — history mirror
+20260817111553  remove_legacy_profile_policies — history mirror
+20260817111604  enforce_approved_unspoken_unlock — history mirror
+20260817111617  remove_legacy_representative_policies — history mirror
+20260817111630  catalog_security_invoker_views — history mirror
+20260817111638  remove_remaining_legacy_rls_policies — history mirror
+20260817111729  catalog_read_policies_for_security_invoker_views — history mirror
 ```
 
-All checks must confirm that the equivalent objects already exist before history is repaired.
+The mirror files intentionally contain no schema mutation. The final idempotent migration `20260820043600_rel_007_source_of_truth_convergence.sql` owns the converged end state.
 
-## One-time staging repair sequence
+## Required checks before deployment
 
-Use the linked staging project from a trusted local checkout:
+Run from a trusted checkout linked to staging:
 
 ```bash
-supabase migration list --linked
-supabase migration repair 20260816130000 --status applied
-supabase migration repair 20260816130100 --status applied
 supabase migration list --linked
 supabase db push --dry-run
 ```
 
-The dry run must show only:
+The local and remote columns must align through `20260817111729`. The dry run must show only:
 
 ```text
 20260820043600_rel_007_source_of_truth_convergence.sql
 ```
 
-If any other schema-changing migration appears, stop and reconcile again. After the PR checks pass and the dry run is clean:
+If an older migration appears pending or a remote-only version lacks a local file, stop. Do not use `migration repair` to conceal a mismatch that has not been explained.
+
+After application quality, local reset, pgTAP, and the dry run all pass:
 
 ```bash
 supabase db push
@@ -108,4 +80,4 @@ Verify all of the following:
 
 ## Rollback posture
 
-REL-007 replaces functions and policies but does not delete product or reference data. Roll back application code through Git, restore the previous function definitions captured in Phase 0 evidence, and repair migration history only after the schema has been restored. Never mark a failed or partially applied migration as applied.
+REL-007 replaces functions and policies but does not delete product or reference data. Roll back application code through Git, restore the previous function definitions captured in Phase 0 evidence, and reconcile migration history only after the schema has been restored. Never mark a failed or partially applied migration as applied.
