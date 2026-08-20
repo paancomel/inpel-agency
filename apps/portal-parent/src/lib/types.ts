@@ -39,6 +39,8 @@ export interface ReviewDraft {
 }
 export interface UniversityTarget { id: string; name: string; location: string | null; courses?: string[] }
 export interface University extends UniversityTarget {
+  /** Source-catalogue provenance only. Product writes always use `id`. */
+  referenceInstitutionId?: string;
   shortName: string; type: string; address: string; website: string; mapUrl: string; rating: number; ratings: Ratings;
   reviewCount: number; livingCost?: number; latestReviewAt: string; strengths: string[]; weaknesses: string[];
   rankingEligible?: boolean;

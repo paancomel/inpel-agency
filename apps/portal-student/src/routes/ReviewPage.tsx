@@ -33,7 +33,7 @@ export function ReviewPage() {
   async function handlePublish() {
     if (isPublishing) return;
 
-    const nextBlockers = getWizardBlockers(draft);
+    const nextBlockers = getWizardBlockers(draft, pendingAssets);
 
     setBlockers(nextBlockers);
     setPublishError(null);
@@ -51,9 +51,9 @@ export function ReviewPage() {
       navigate("/dashboard/success");
     } catch (error) {
       if (
-            canUseInstitutionDemo() &&
-        error instanceof Error &&
-        error.name === "SupabaseConfigurationError"
+        canUseInstitutionDemo()
+        && error instanceof Error
+        && error.name === "SupabaseConfigurationError"
       ) {
         await new Promise((resolve) => setTimeout(resolve, 650));
         setPublishResult(createDemoResult(draft.courses.length, draft.gallery.length));

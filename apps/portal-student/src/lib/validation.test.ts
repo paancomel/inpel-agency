@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { createEmptyCourse, createEmptyPortalDraft } from "./defaults";
 import {
   courseSchema,
   getPublishBlockers,
@@ -10,7 +11,6 @@ import {
   loginSchema,
   universityProfileSchema,
 } from "./validation";
-import { createEmptyCourse, createEmptyPortalDraft } from "./defaults";
 
 describe("INPELER validation contracts", () => {
   it("preserves the blueprint MQA error message", () => {
@@ -126,5 +126,21 @@ describe("INPELER validation contracts", () => {
       "Add at least one public gallery image.",
       "Confirm the institution accuracy attestation before publishing.",
     ]);
+  });
+
+  it("counts a selected facility file before the publish upload starts", () => {
+    const draft = createEmptyPortalDraft();
+    draft.facilities.library = true;
+    const pendingAssets = {
+      logo: null,
+      facilities: {
+        library: new File(["safe image"], "library.png", { type: "image/png" }),
+      },
+    };
+
+    expect(getWizardSteps(draft, pendingAssets).find((step) => step.id === "facilities"))
+      .toMatchObject({ complete: true });
+    expect(getWizardBlockers(draft, pendingAssets))
+      .not.toContain("Add at least one facility with a verified image.");
   });
 });
