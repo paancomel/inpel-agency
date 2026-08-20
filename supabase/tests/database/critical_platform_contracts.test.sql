@@ -2,7 +2,7 @@ begin;
 
 set local search_path = public, extensions;
 
-select plan(23);
+select plan(24);
 
 select has_table(
   'private',
@@ -242,8 +242,20 @@ select ok(
 select has_index(
   'public',
   'published_reviews',
-  'published_reviews_university_visibility_published_idx',
+  'published_reviews_university_visibility_idx',
   'public review lookups have a covering university and visibility index'
+);
+
+select results_eq(
+  $$
+    select indexname::text
+      from pg_indexes
+     where schemaname = 'public'
+       and tablename = 'published_reviews'
+       and indexname = 'published_reviews_university_visibility_published_idx'
+  $$,
+  $$ select null::text where false $$,
+  'duplicate public review lookup index is absent'
 );
 
 select * from finish();

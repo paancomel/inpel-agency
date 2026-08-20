@@ -12,7 +12,7 @@ const historicalMigration = readFileSync(
 
 const convergenceMigration = readFileSync(
   fileURLToPath(new URL(
-    "../../supabase/migrations/20260820043600_rel_007_source_of_truth_convergence.sql",
+    "../../supabase/migrations/20260820050152_rel_007_source_of_truth_convergence.sql",
     import.meta.url,
   )),
   "utf8",

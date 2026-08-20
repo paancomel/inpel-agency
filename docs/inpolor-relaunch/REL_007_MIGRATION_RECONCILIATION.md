@@ -1,7 +1,7 @@
 # REL-007 Migration Reconciliation
 
 **Scope:** authorized staging project `xrmrhjgkttxzvwdsjazs` only  
-**Rule:** do not run a blind `supabase db push` while local and remote history differ.
+**Status:** reconciled and deployed on 20 August 2026.
 
 ## Resolution
 
@@ -19,7 +19,7 @@ Staging contains the equivalent changes under its actual recorded versions:
 20260817111334  inpolor_review_declaration_audit
 ```
 
-REL-007 moves the real migration bodies to those recorded staging versions and removes the unrecorded repository versions. This is deliberate history convergence, not a schema rollback. Fresh local rebuilds still execute the real guardian-consent and declaration migrations; linked staging correctly treats them as already applied.
+REL-007 moves the real migration bodies to those recorded staging versions and removes the unrecorded repository versions. Fresh local rebuilds still execute the real guardian-consent and declaration migrations; linked staging correctly treats them as already applied.
 
 ## Remote history represented in the repository
 
@@ -36,48 +36,46 @@ REL-007 moves the real migration bodies to those recorded staging versions and r
 20260817111630  catalog_security_invoker_views — history mirror
 20260817111638  remove_remaining_legacy_rls_policies — history mirror
 20260817111729  catalog_read_policies_for_security_invoker_views — history mirror
+20260820050152  rel_007_source_of_truth_convergence — real migration body
+20260820050348  rel_007_remove_duplicate_review_index — real follow-up
 ```
 
-The mirror files intentionally contain no schema mutation. The final idempotent migration `20260820043600_rel_007_source_of_truth_convergence.sql` owns the converged end state.
+The mirror files intentionally contain no schema mutation. They represent changes already applied to staging before REL-007. The two REL-007 migrations are stored under the exact versions recorded by Supabase MCP, preventing another filename/history split.
 
-## Required checks before deployment
+## Deployment evidence
 
-Run from a trusted checkout linked to staging:
+Before deployment:
 
-```bash
-supabase migration list --linked
-supabase db push --dry-run
-```
+- the repository and staging histories aligned through `20260817111729`;
+- the only new schema change was REL-007;
+- application typecheck, lint, tests, and build passed;
+- a clean local Supabase rebuild and all pgTAP tests passed;
+- all three Vercel staging deployments succeeded.
 
-The local and remote columns must align through `20260817111729`. The dry run must show only:
+After deployment:
 
-```text
-20260820043600_rel_007_source_of_truth_convergence.sql
-```
-
-If an older migration appears pending or a remote-only version lacks a local file, stop. Do not use `migration repair` to conceal a mismatch that has not been explained.
-
-After application quality, local reset, pgTAP, and the dry run all pass:
-
-```bash
-supabase db push
-supabase migration list --linked
-```
-
-## Post-deploy verification
-
-Verify all of the following:
-
-- declaration version is `inpolor-launch-2026-08-16`;
-- `submit_inpolor_review` is not executable by `anon`;
-- reference catalogue views are `security_invoker=true`;
-- catalogue base-table policies require verified links and published visibility;
 - `private.reference_import_runs` has RLS enabled and no browser grants;
-- one report does not update a public content status;
-- unlock requires an owned published review;
-- parent invitation accepts the portal’s exact four preference values and rejects missing, null, extra, or mismatched keys;
-- public catalogue and review counts remain unchanged unless real reviewed data is deliberately added.
+- canonical declaration receipts are private and hidden from `anon` and `authenticated`;
+- `submit_inpolor_review` accepts only `inpolor-launch-2026-08-16` declarations and is blocked for `anon`;
+- review projection reads `mainExperience`;
+- one report no longer auto-hides public content;
+- moderator publication, not submission, unlocks protected excerpts;
+- `get_institution_entitlement` runs as security invoker;
+- catalogue policies require verified links and published visibility;
+- the duplicate review lookup index introduced during rollout was removed immediately;
+- product data counts remained zero: no universities, verified links, published catalogue rows, profiles, or reviews were fabricated.
+
+## Remaining non-migration gates
+
+Migration history is no longer a blocker. Remaining gates are operational or governance work:
+
+- legal publication approval;
+- named verification and moderation owners;
+- a real institution, moderator account, and verified contributor for an end-to-end staging smoke test;
+- enabling Supabase Auth leaked-password protection;
+- a separate authorization review for intentionally callable `SECURITY DEFINER` RPCs;
+- older performance-advisor findings outside REL-007.
 
 ## Rollback posture
 
-REL-007 replaces functions and policies but does not delete product or reference data. Roll back application code through Git, restore the previous function definitions captured in Phase 0 evidence, and reconcile migration history only after the schema has been restored. Never mark a failed or partially applied migration as applied.
+REL-007 replaces functions and policies but does not delete product or reference data. Roll back application code through Git, restore the prior function definitions from Phase 0 evidence, and restore migration history only after the schema has been restored. Never mark a failed or partially applied migration as applied.
