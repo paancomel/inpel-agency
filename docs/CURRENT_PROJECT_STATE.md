@@ -28,6 +28,11 @@ not a production approval.
   users, profiles, and reviews.
 - Focused INPOLOR unit tests, portal typecheck, and portal build passed after
   the review-ID correction.
+- Public Vercel staging smoke checks passed for [INPOLOR](https://inpolor-staging.vercel.app/),
+  [INPELER](https://inpeler-staging.vercel.app/login), and
+  [INPEL](https://inpel-staging-donnnave-5370s-projects.vercel.app/) on the
+  deployment of `b7d06aa`. No credentials, personal data, or new records were
+  used during this check.
 
 ## Critical guardrails
 
@@ -51,13 +56,10 @@ not a production approval.
 
 1. Replace Terms placeholders and complete Malaysian legal/corporate/vendor
    approvals before public production release.
-2. Restore Vercel project-scope access, then complete the authenticated browser
-   journey matrix at 320px, 768px, 1024px, and 1440px against the preview
-   deployed from the intended commit. Current API access is `403`, so this is
-   not verified.
-3. Review code-splitting for the INPEL main bundle; it exceeds Vite's 500 kB
-   warning threshold but does not fail the build.
-4. Before any production launch, follow the production checklist and create a
+2. Complete the authenticated, responsive browser journey matrix at 320px,
+   768px, 1024px, and 1440px against the intended Vercel deployment. Public
+   desktop smoke checks are complete, but the exact viewport matrix is not.
+3. Before any production launch, follow the production checklist and create a
    separately approved production plan; canonical staging must not be silently
    reclassified or substituted.
 

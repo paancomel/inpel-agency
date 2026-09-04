@@ -21,7 +21,7 @@ At the audit snapshot:
 - `supabase/config.toml` references `supabase/seed.sql`, but that file does not exist.
 - The staging catalogue has 756 MQA-source-backed institutions, each linked to a real `universities.id` and published for INPOLOR. This is staging catalogue availability, not approval of a 756-institution production launch.
 - An authenticated staging review submission reached `submitted` and its QA account/data were removed. The portal must use `university_id` for review submission; `reference_institution_id` is source/catalogue identity only and is correctly rejected by the RPC.
-- The full responsive browser journey matrix on an actual Vercel preview is still unproven because the connected Vercel API returns project-scope `403`.
+- Public staging smoke checks passed on the Vercel deployment of `b7d06aa`: the 756-institution INPOLOR directory/search and populated review selector, INPELER representative login boundary, and INPEL parent assessment entry screen were reachable. No credentials or personal data were used. The exact 320px/768px/1024px/1440px responsive and authenticated browser matrix is still required.
 - The Vercel CLI is not installed as a global executable in the audited environment. Use a pinned project/dev dependency or a pinned `pnpm dlx vercel@<reviewed-version>` invocation; do not depend on `@latest` during release.
 - Supabase CLI access in the restricted desktop environment cannot write its telemetry file. Run database verification in an approved unrestricted release shell or through the project-scoped Supabase MCP connection.
 

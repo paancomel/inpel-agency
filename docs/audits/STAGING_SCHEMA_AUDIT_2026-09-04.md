@@ -38,8 +38,7 @@ The Supabase CLI login-role path can return `403`, but direct staging connection
 ## Required next work
 
 1. Replace the Terms placeholders and obtain the required incorporation, vendor-list, and Malaysian legal approvals before any production release. The visible Terms page still identifies the operator as proposed and contains `[PLATFORM URL]`, `[REGISTERED ADDRESS]`, and `[CONTACT NUMBER]` placeholders.
-2. Complete the required browser journey matrix against the Vercel preview at 320px, 768px, 1024px, and 1440px once Vercel project-scope access is restored. The connected Vercel API currently returns `403` for this project, so the preview deployment could not be inspected.
-3. Consider code-splitting the INPEL portal's main JavaScript bundle, which currently exceeds Vite's 500 kB warning threshold. This is not a build failure.
+2. Complete the remaining responsive browser matrix at 320px, 768px, 1024px, and 1440px. The public staging URLs are now reachable, and desktop smoke verification is recorded below; exact viewport evidence is still required before a responsive GO decision.
 
 ## Verification evidence
 
@@ -50,6 +49,8 @@ The Supabase CLI login-role path can return `403`, but direct staging connection
 - Local browser smoke verification passed for the initial routes of INPEL (`/`), INPELER (`/login`), and INPOLOR (`/` and `/submit-review`), including visible form/navigation controls and legal-route navigation. This is not a substitute for the required authenticated, responsive Vercel-preview matrix.
 - After the catalogue migration, a fresh local INPOLOR browser session loaded all 756 institutions from canonical staging; the directory and visible result count both reported `756`.
 - An authenticated staging test on 5 September 2026 confirmed that the old browser mapping supplied a `reference_institution_id`, which the review RPC correctly rejected. The portal now supplies the linked `university_id`; the focused unit test and portal typecheck pass, and a controlled authenticated review reached `submitted` status. The cleanup query then confirmed zero test Auth users, profiles, and reviews.
+- Public Vercel staging smoke verification passed on 5 September 2026 for the deployment of commit `b7d06aa`: [INPOLOR](https://inpolor-staging.vercel.app/), [INPELER](https://inpeler-staging.vercel.app/login), and [INPEL](https://inpel-staging-donnnave-5370s-projects.vercel.app/). INPOLOR loaded all 756 institutions, returned the expected result for a university search, and populated its review-form institution list. INPELER displayed the representative login boundary; INPEL displayed the parent assessment entry journey. No credentials or personal data were entered and no production-like record was created.
+- The INPOLOR Terms route is reachable but remains explicitly a draft: it names a proposed operator and still contains the `[PLATFORM URL]`, `[REGISTERED ADDRESS]`, and `[CONTACT NUMBER]` placeholders. This remains a production blocker.
 
 ## Explicitly out of scope
 
