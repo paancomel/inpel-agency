@@ -36,8 +36,10 @@ The Supabase CLI login-role path can return `403`, but direct staging connection
 ## Required next work
 
 1. Add a focused authenticated INPOLOR submission test for `submit_inpolor_review`; the existing integration audit now correctly proves that the legacy anonymous endpoint is denied.
-2. Perform the required browser journey matrix and production/legal/operations gates before any production release.
-3. Consider code-splitting the INPEL portal's main JavaScript bundle, which currently exceeds Vite's 500 kB warning threshold. This is not a build failure.
+2. Restore a browser-testable INPOLOR institution catalogue. The local preview loaded the public directory and review wizard, but both reported that the catalogue was unavailable and correctly disabled institution-dependent submission.
+3. Replace the Terms placeholders and obtain the required incorporation, vendor-list, and Malaysian legal approvals before any production release. The visible Terms page still identifies the operator as proposed and contains `[PLATFORM URL]`, `[REGISTERED ADDRESS]`, and `[CONTACT NUMBER]` placeholders.
+4. Complete the required browser journey matrix against the Vercel preview at 320px, 768px, 1024px, and 1440px once Vercel project-scope access is restored. The connected Vercel API currently returns `403` for this project, so the preview deployment could not be inspected.
+5. Consider code-splitting the INPEL portal's main JavaScript bundle, which currently exceeds Vite's 500 kB warning threshold. This is not a build failure.
 
 ## Verification evidence
 
@@ -45,6 +47,7 @@ The Supabase CLI login-role path can return `403`, but direct staging connection
 - Post-run staging query found zero `qa-audit-*` profiles, `QA Audit` universities/courses, test sessions, or test reviews.
 - Local quality gates passed on 4 September 2026: `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build`.
 - The full test suite initially exposed stale declaration-audit test references after migration reconciliation; the contract test now locks the canonical migration's current declaration receipt and authenticated-RPC contract.
+- Local browser smoke verification passed for the initial routes of INPEL (`/`), INPELER (`/login`), and INPOLOR (`/` and `/submit-review`), including visible form/navigation controls and legal-route navigation. This is not a substitute for the required authenticated, responsive Vercel-preview matrix.
 
 ## Explicitly out of scope
 
