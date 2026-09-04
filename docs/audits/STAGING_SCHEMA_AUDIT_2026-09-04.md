@@ -8,7 +8,7 @@
 
 ## Reconciliation status
 
-The local repository and staging each now have 34 migration IDs, in the same order.
+The local repository and staging each now have 35 migration IDs, in the same order.
 
 - The two local-only IDs were replaced with the canonical staging IDs.
 - The 14 previously staging-only SQL sources were recovered directly from `supabase_migrations.schema_migrations.statements` and committed as local migration files.
@@ -17,6 +17,7 @@ The local repository and staging each now have 34 migration IDs, in the same ord
 - Migration `20260904031206_bootstrap_institution_creator_membership.sql` was applied to staging. It creates an active `admin` membership automatically when a representative creates an institution, closing the observed RLS ownership gap.
 - The deployed trigger uses a private `SECURITY DEFINER` function with an empty `search_path`; `PUBLIC`, `anon`, and `authenticated` cannot execute the function directly.
 - Migration `20260904065109_publish_full_inpolor_reference_catalog.sql` was applied to staging with explicit user approval. It creates 756 source-backed directory records, 756 verified reference links, and 756 published INPOLOR visibility records. No representative, contact, address, price, or course claim was invented.
+- Migration `20260904164714_cleanup_inpolor_authenticated_qa_fixture.sql` removed the controlled authenticated-review test account and every associated private review record after verification.
 
 The Supabase CLI login-role path can return `403`, but direct staging connection using the locally stored `SUPABASE_DB_PASSWORD` successfully applied the reviewed migration. Use project-scoped MCP migration inspection as the authoritative read-only history check. Do **not** run `supabase migration repair`: migration IDs match and the command would only risk rewriting canonical history.
 
@@ -36,11 +37,9 @@ The Supabase CLI login-role path can return `403`, but direct staging connection
 
 ## Required next work
 
-1. Add a focused authenticated INPOLOR submission test for `submit_inpolor_review`; the existing integration audit now correctly proves that the legacy anonymous endpoint is denied.
-2. Add a focused authenticated INPOLOR submission test for `submit_inpolor_review`; the directory now has valid university records, but the browser submission path still needs an authenticated end-to-end confirmation.
-3. Replace the Terms placeholders and obtain the required incorporation, vendor-list, and Malaysian legal approvals before any production release. The visible Terms page still identifies the operator as proposed and contains `[PLATFORM URL]`, `[REGISTERED ADDRESS]`, and `[CONTACT NUMBER]` placeholders.
-4. Complete the required browser journey matrix against the Vercel preview at 320px, 768px, 1024px, and 1440px once Vercel project-scope access is restored. The connected Vercel API currently returns `403` for this project, so the preview deployment could not be inspected.
-5. Consider code-splitting the INPEL portal's main JavaScript bundle, which currently exceeds Vite's 500 kB warning threshold. This is not a build failure.
+1. Replace the Terms placeholders and obtain the required incorporation, vendor-list, and Malaysian legal approvals before any production release. The visible Terms page still identifies the operator as proposed and contains `[PLATFORM URL]`, `[REGISTERED ADDRESS]`, and `[CONTACT NUMBER]` placeholders.
+2. Complete the required browser journey matrix against the Vercel preview at 320px, 768px, 1024px, and 1440px once Vercel project-scope access is restored. The connected Vercel API currently returns `403` for this project, so the preview deployment could not be inspected.
+3. Consider code-splitting the INPEL portal's main JavaScript bundle, which currently exceeds Vite's 500 kB warning threshold. This is not a build failure.
 
 ## Verification evidence
 
@@ -50,6 +49,7 @@ The Supabase CLI login-role path can return `403`, but direct staging connection
 - The full test suite initially exposed stale declaration-audit test references after migration reconciliation; the contract test now locks the canonical migration's current declaration receipt and authenticated-RPC contract.
 - Local browser smoke verification passed for the initial routes of INPEL (`/`), INPELER (`/login`), and INPOLOR (`/` and `/submit-review`), including visible form/navigation controls and legal-route navigation. This is not a substitute for the required authenticated, responsive Vercel-preview matrix.
 - After the catalogue migration, a fresh local INPOLOR browser session loaded all 756 institutions from canonical staging; the directory and visible result count both reported `756`.
+- An authenticated staging test on 5 September 2026 confirmed that the old browser mapping supplied a `reference_institution_id`, which the review RPC correctly rejected. The portal now supplies the linked `university_id`; the focused unit test and portal typecheck pass, and a controlled authenticated review reached `submitted` status. The cleanup query then confirmed zero test Auth users, profiles, and reviews.
 
 ## Explicitly out of scope
 

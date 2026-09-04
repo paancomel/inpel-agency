@@ -37,7 +37,7 @@ export async function loadCommunityDirectory(): Promise<{ universities: Universi
       supabase.from("published_reviews").select("*").order("created_at", { ascending: false }),
     ]);
     if (universitiesResult.error) return { universities: [], reviewTargets: [], reviews: [], connected: false, message: "The university directory is temporarily unavailable." };
-    const universityRows = (universitiesResult.data ?? []) as unknown as Array<{ reference_institution_id: string; institution_name: string; institution_previous_name: string | null; programme_count: number }>;
+    const universityRows = (universitiesResult.data ?? []) as unknown as Array<{ reference_institution_id: string; university_id: string | null; institution_name: string; institution_previous_name: string | null; programme_count: number }>;
     const programmeRows = programmesResult.error ? [] : (programmesResult.data ?? []) as unknown as Array<{ reference_institution_id: string; qualification_name: string }>;
     const programmes = new Map<string, string[]>();
     for (const row of programmeRows) {
@@ -49,12 +49,16 @@ export async function loadCommunityDirectory(): Promise<{ universities: Universi
     const summaryRows = (summariesResult.data ?? []) as unknown as Array<{ university_id: string; review_count: number; overall_rating: number | null; rating_facilities: number | null; rating_teaching: number | null; rating_class_experience: number | null; rating_safety: number | null; rating_value: number | null; rating_transport: number | null; rating_campus_life: number | null; rating_career: number | null; living_cost_monthly: number | null; ranking_eligible: boolean; newest_review_at: string | null }>;
     const summaries = new Map(summaryRows.map((item) => [item.university_id, item]));
     const reviews = reviewsResult.error ? [] : (reviewsResult.data ?? []).map(reviewFromRow).filter((item): item is Review => Boolean(item));
-    const universities = universityRows.map((row) => {
-      const summary = summaries.get(row.reference_institution_id);
-      const relevantReviews = reviews.filter((review) => review.universityId === row.reference_institution_id && review.visibilityStatus === "published");
+    const catalogueRows = universityRows.flatMap((row) => {
+      const universityId = asText(row.university_id);
+      return universityId ? [{ ...row, universityId }] : [];
+    });
+    const universities = catalogueRows.map((row) => {
+      const summary = summaries.get(row.universityId);
+      const relevantReviews = reviews.filter((review) => review.universityId === row.universityId && review.visibilityStatus === "published");
       const location = "Location pending verification"; const address = location;
       return {
-        id: row.reference_institution_id, name: row.institution_name, location, address, shortName: initials(row.institution_name), type: "MQA reference institution",
+        id: row.universityId, name: row.institution_name, location, address, shortName: initials(row.institution_name), type: "MQA reference institution",
         website: "", mapUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
         rating: Number(summary?.overall_rating ?? 0), reviewCount: Number(summary?.review_count ?? 0), ...(summary?.living_cost_monthly != null ? { livingCost: summary.living_cost_monthly } : {}),
         latestReviewAt: summary?.newest_review_at ?? "", rankingEligible: summary?.ranking_eligible ?? false,
@@ -65,8 +69,8 @@ export async function loadCommunityDirectory(): Promise<{ universities: Universi
     // The MQA reference catalogue is the source of truth for the public form.
     // The narrower INPOLOR view is reserved for verified institution profiles,
     // so using it here hid every imported institution before verification.
-    const reviewTargets = universityRows.map((row) => ({
-      id: row.reference_institution_id,
+    const reviewTargets = catalogueRows.map((row) => ({
+      id: row.universityId,
       name: row.institution_name,
       location: null,
       courses: programmes.get(row.reference_institution_id) ?? [],

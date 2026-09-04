@@ -15,7 +15,7 @@ describe("live INPOLOR catalogue", () => {
   beforeEach(() => {
     from.mockReset();
     from.mockImplementation((table: string) => {
-      if (table === "shared_catalog_institutions") return ordered({ data: [{ reference_institution_id: "reference-1", institution_name: "Universiti Sebenar", institution_previous_name: null, programme_count: 1 }], error: null });
+      if (table === "shared_catalog_institutions") return ordered({ data: [{ reference_institution_id: "reference-1", university_id: "university-1", institution_name: "Universiti Sebenar", institution_previous_name: null, programme_count: 1 }], error: null });
       if (table === "shared_catalog_programmes") return selected({ data: [{ reference_institution_id: "reference-1", qualification_name: "Diploma Sains Komputer" }], error: null });
       if (table === "inpolor_university_summaries") return selected({ data: [], error: null });
       if (table === "published_reviews") return ordered({ data: [], error: null });
@@ -32,8 +32,8 @@ describe("live INPOLOR catalogue", () => {
     expect(from).not.toHaveBeenCalledWith("inpolor_catalog_programmes");
     expect(from).not.toHaveBeenCalledWith("universities");
     expect(result.universities).toHaveLength(1);
-    expect(result.universities[0]).toMatchObject({ id: "reference-1", name: "Universiti Sebenar", courses: ["Diploma Sains Komputer"] });
-    expect(result.reviewTargets).toEqual([{ id: "reference-1", name: "Universiti Sebenar", location: null, courses: ["Diploma Sains Komputer"] }]);
+    expect(result.universities[0]).toMatchObject({ id: "university-1", name: "Universiti Sebenar", courses: ["Diploma Sains Komputer"] });
+    expect(result.reviewTargets).toEqual([{ id: "university-1", name: "Universiti Sebenar", location: null, courses: ["Diploma Sains Komputer"] }]);
     expect(result.message).toBeNull();
   });
 
