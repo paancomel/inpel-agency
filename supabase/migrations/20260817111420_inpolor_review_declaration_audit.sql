@@ -1,0 +1,1 @@
+do $$ begin if to_regclass('private.review_declaration_receipts') is null or to_regprocedure('public.submit_inpolor_review(jsonb)') is null or to_regprocedure('public.submit_inpolor_review_inner(jsonb)') is null then raise exception 'Equivalent INPOLOR declaration-audit objects are missing; refuse migration-history reconciliation.'; end if; end $$;

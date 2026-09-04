@@ -1,0 +1,1 @@
+drop policy if exists "representatives create owned universities" on public.universities; drop policy if exists "representatives delete owned universities" on public.universities; drop policy if exists "representatives update owned universities" on public.universities;

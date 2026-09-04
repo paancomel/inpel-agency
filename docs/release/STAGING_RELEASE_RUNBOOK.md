@@ -11,6 +11,11 @@ The technical baseline was last verified on **29 July 2026** at commit
 - The disposable staging integration audit passed, including cross-owner family
   and university ownership checks plus fixture cleanup.
 
+On **4 September 2026**, the reconciled migration history was verified through
+`20260904031206_bootstrap_institution_creator_membership`, and the disposable
+staging integration audit passed again with zero fixture residue. This is newer
+staging evidence, not a replacement for the full local quality or release gates.
+
 This is staging evidence only. It is not production approval and it does not
 complete the legal, browser, domain, communications, or operations gates.
 
@@ -24,6 +29,10 @@ Use only the disposable Supabase staging project:
 | Production project, URL, credentials, or data | **Prohibited** |
 
 Do not use a production credential as a substitute for a missing staging credential. Do not run a command against another project merely because it has the expected schema.
+
+Do not use Docker Desktop or a local Supabase stack. All database inspection,
+verification, and approved staging operations target this project directly. See
+[the canonical Supabase environment boundary](../SUPABASE_CANONICAL_ENVIRONMENT.md).
 
 Stop immediately if the project ref, environment URL, migration history, or intended target cannot be proven to be the staging project above.
 
@@ -91,8 +100,28 @@ security-hardening, and audit-support migrations are considered:
 11. `20260726033011_rate_limit_public_review_submission.sql`
 12. `20260729074956_grant_service_role_integration_audit.sql`
 13. `20260729075740_grant_service_role_audit_cleanup_filter_access.sql`
+14. `20260815090000_inpeler_v1_institution_management.sql`
+15. `20260816090000_inpolor_public_launch_foundation.sql`
+16. `20260816100000_inpolor_community_profile_onboarding.sql`
+17. `20260816110000_inpolor_reward_photo_pipeline.sql`
+18. `20260816120000_reference_diploma_catalog.sql`
+19. `20260817111316_inpel_parent_guardian_consent.sql`
+20. `20260817111334_inpolor_review_declaration_audit.sql`
+21. `20260817111420_inpolor_review_declaration_audit.sql`
+22. `20260817111423_fix_inpolor_declaration_return_contract.sql`
+23. `20260817111541_critical_platform_contracts_staging.sql`
+24. `20260817111548_reject_null_parent_preferences.sql`
+25. `20260817111553_remove_legacy_profile_policies.sql`
+26. `20260817111604_enforce_approved_unspoken_unlock.sql`
+27. `20260817111617_remove_legacy_representative_policies.sql`
+28. `20260817111630_catalog_security_invoker_views.sql`
+29. `20260817111638_remove_remaining_legacy_rls_policies.sql`
+30. `20260817111729_catalog_read_policies_for_security_invoker_views.sql`
+31. `20260820050152_rel_007_source_of_truth_convergence.sql`
+32. `20260820050348_rel_007_remove_duplicate_review_index.sql`
+33. `20260904031206_bootstrap_institution_creator_membership.sql`
 
-Before applying items 5–13, the database/RLS owner must review their order, current-data conflicts, grants, policies, `SECURITY DEFINER` authorization, and `search_path` controls. Do not use a broad migration push that could include unrelated dirty-worktree changes.
+Before applying items 5–33, the database/RLS owner must review their order, current-data conflicts, grants, policies, `SECURITY DEFINER` authorization, and `search_path` controls. Do not use a broad migration push that could include unrelated dirty-worktree changes.
 
 ### 1.4 Apply rule
 

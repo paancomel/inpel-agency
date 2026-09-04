@@ -1,5 +1,3 @@
-begin;
-
 alter table public.sessions
   add column student_age_band text,
   add column guardian_consent_given boolean not null default false,
@@ -138,5 +136,3 @@ $$;
 
 revoke all on function public.create_parent_student_invitation(text, text, text, jsonb, jsonb, text, boolean) from public, anon;
 grant execute on function public.create_parent_student_invitation(text, text, text, jsonb, jsonb, text, boolean) to authenticated;
-
-commit;

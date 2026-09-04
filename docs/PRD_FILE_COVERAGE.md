@@ -1,5 +1,7 @@
 # Liputan Fail Audit PRD
 
+> Status semasa: ini ialah manifest sejarah bertarikh 29 Julai 2026, bukan inventori release semasa. Untuk migration schema canonical selepas reconciliation, rujuk `docs/audits/STAGING_SCHEMA_AUDIT_2026-09-04.md` dan `docs/SUPABASE_CANONICAL_ENVIRONMENT.md`.
+
 **Tarikh:** 29 Julai 2026  
 **Root:** `C:\\Users\\User\\Documents\\Agency Web`  
 **Fail unik dalam manifest:** 345 (344 fail baseline + PRD utama)

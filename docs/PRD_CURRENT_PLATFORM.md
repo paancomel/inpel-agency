@@ -843,7 +843,7 @@ Masih perlu sebelum production:
 ### P1 — Source of truth drift
 
 6. **Dokumentasi schema perlu terus mengikuti migrasi**
-   - Root README kini merujuk migrasi dan arahan database semasa.
+   - History migrasi repo kini telah dipadankan semula dengan staging canonical `xrmrhjgkttxzvwdsjazs`; rekod dan semakan content berada dalam `docs/audits/STAGING_SCHEMA_AUDIT_2026-09-04.md`.
    - Blueprint lama masih belum menjadi inventori penuh bagi reference catalogue, consent audit dan declaration receipts.
 
 7. **INPEL README masih menggambarkan fallback yang lebih luas**

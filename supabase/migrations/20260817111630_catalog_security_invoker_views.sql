@@ -1,0 +1,1 @@
+alter view public.shared_catalog_institutions set (security_invoker=true); alter view public.shared_catalog_programmes set (security_invoker=true); alter view public.inpolor_catalog_institutions set (security_invoker=true); alter view public.inpolor_catalog_programmes set (security_invoker=true);

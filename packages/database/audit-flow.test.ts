@@ -281,8 +281,18 @@ describe("Supabase three-portal integration audit", () => {
         p_student_email: fixtures.accounts.student.email,
         p_preferred_location: "Selangor",
         p_monthly_household_income: "RM 6,000 - RM 9,999",
-        p_parental_preferences: { campus_vibe: "Modern" },
-        p_parent_preferences: { campusVibe: "Modern" },
+        p_parental_preferences: {
+          campus_vibe: "Private (IPTS) - Modern & Vibrant",
+          campus_concern: "Academic rigor & faculty quality",
+          ultimate_win: "Strong professional network",
+          independence: "Highly independent self-starter",
+        },
+        p_parent_preferences: {
+          campusVibe: "Private (IPTS) - Modern & Vibrant",
+          campusConcern: "Academic rigor & faculty quality",
+          ultimateWin: "Strong professional network",
+          independence: "Highly independent self-starter",
+        },
         p_student_age_band: "18+",
         p_guardian_consent_confirmed: false,
       });
@@ -380,10 +390,11 @@ describe("Supabase three-portal integration audit", () => {
         p_review_data: fixtures.review.submission.review_data,
         p_is_anonymous: true,
       });
-      expectNoDatabaseError(moderatedReview.error, "anonymous moderated review RPC");
-      const reviewPayload = jsonObject(moderatedReview.data, "anonymous moderated review RPC");
-      expect(typeof reviewPayload.review_id).toBe("string");
-      createdIds.reviews.push(reviewPayload.review_id as string);
+      expectDatabaseError(
+        moderatedReview.error,
+        "42501",
+        "anonymous legacy moderated review RPC",
+      );
     } catch (error) {
       auditFailure = error;
     }
