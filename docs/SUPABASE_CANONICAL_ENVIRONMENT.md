@@ -23,4 +23,4 @@ Do not connect to, inspect, write to, or substitute any other Supabase project.
 
 ## Current reconciliation state
 
-The repository and canonical staging project each contain the same 33 migration IDs in the same order. The canonical evidence record is [the staging schema audit](audits/STAGING_SCHEMA_AUDIT_2026-09-04.md). Preserve that history; do not rewrite it with `migration repair`, a reset, or a rollback merely to resolve future drift.
+The repository and canonical staging project each contain the same 34 migration IDs in the same order. The canonical evidence record is [the staging schema audit](audits/STAGING_SCHEMA_AUDIT_2026-09-04.md). Preserve that history; do not rewrite it with `migration repair`, a reset, or a rollback merely to resolve future drift.
