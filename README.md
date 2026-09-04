@@ -37,26 +37,18 @@ See `apps/portal-universiti/README.md` for its route map, offline behavior, priv
 
 ## Supabase configuration
 
-The database schema is versioned in
-`supabase/migrations/20260714024203_initial_schema.sql`. With Docker Desktop
-running, rebuild the local database from the migration and execute its pgTAP
-contract tests from the repository root:
+This repository has one and only one Supabase environment: disposable staging
+project `xrmrhjgkttxzvwdsjazs` (`inpel-agency`, `ap-southeast-1`). It is the
+canonical schema and migration-history source. **Do not use Docker Desktop, a
+local Supabase stack, `supabase start`, `supabase db reset`, `migration repair`,
+or another project ref.**
 
-```sh
-npx supabase start
-npx supabase db reset
-npx supabase test db
-```
-
-To deploy the migration to a hosted Supabase project, authenticate, replace
-`YOUR_PROJECT_REFERENCE_ID` with the reference shown in the project's dashboard
-URL, link the project, and push the pending migration:
-
-```sh
-npx supabase login
-npx supabase link --project-ref YOUR_PROJECT_REFERENCE_ID
-npx supabase db push
-```
+Read [the canonical-environment policy](docs/SUPABASE_CANONICAL_ENVIRONMENT.md)
+and [the current project state](docs/CURRENT_PROJECT_STATE.md) before any
+Supabase operation. The migration history is reconciled: local and staging
+each have the same 35 migration IDs in the same order. Use the project-scoped
+Supabase MCP connection for inspection; treat every remote write as a reviewed,
+forward-only migration against the canonical ref.
 
 Copy `.env.example` to the repository root as `.env` and provide the project's public values. All three Vite portals read their browser-safe configuration from this one file:
 
@@ -75,4 +67,6 @@ import { supabase, type Tables } from "@repo/database";
 type University = Tables<"universities">;
 ```
 
-`packages/database/types.ts` mirrors the 11 tables in `_blueprints/1-Supabase-Schema.md`. Only fields explicitly marked `Not Null` (plus primary keys) are non-nullable. Columns with database defaults are optional during inserts but remain nullable in returned rows unless the blueprint also specifies `Not Null`.
+`packages/database/types.ts` is generated/maintained alongside the current
+Supabase schema. Validate types against the canonical migration set rather than
+assuming the older blueprint table count remains current.

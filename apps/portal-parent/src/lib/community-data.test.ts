@@ -3,8 +3,13 @@ import { loadCommunityDirectory } from "./community-data";
 const from = vi.fn();
 vi.mock("@repo/database", () => ({ supabase: { from } }));
 
-function ordered(result: unknown) {
-  return { select: vi.fn(() => ({ order: vi.fn().mockResolvedValue(result) })) };
+const selectedColumns = new Map<string, string>();
+
+function ordered(table: string, result: unknown) {
+  return { select: vi.fn((columns: string) => {
+    selectedColumns.set(table, columns);
+    return { order: vi.fn().mockResolvedValue(result) };
+  }) };
 }
 
 function selected(result: unknown) {
@@ -14,11 +19,12 @@ function selected(result: unknown) {
 describe("live INPOLOR catalogue", () => {
   beforeEach(() => {
     from.mockReset();
+    selectedColumns.clear();
     from.mockImplementation((table: string) => {
-      if (table === "shared_catalog_institutions") return ordered({ data: [{ reference_institution_id: "reference-1", university_id: "university-1", institution_name: "Universiti Sebenar", institution_previous_name: null, programme_count: 1 }], error: null });
+      if (table === "shared_catalog_institutions") return ordered(table, { data: [{ reference_institution_id: "reference-1", university_id: "university-1", institution_name: "Universiti Sebenar", institution_previous_name: null, programme_count: 1 }], error: null });
       if (table === "shared_catalog_programmes") return selected({ data: [{ reference_institution_id: "reference-1", qualification_name: "Diploma Sains Komputer" }], error: null });
       if (table === "inpolor_university_summaries") return selected({ data: [], error: null });
-      if (table === "published_reviews") return ordered({ data: [], error: null });
+      if (table === "published_reviews") return ordered(table, { data: [], error: null });
       throw new Error(`Unexpected table: ${table}`);
     });
   });
@@ -31,6 +37,7 @@ describe("live INPOLOR catalogue", () => {
     expect(from).not.toHaveBeenCalledWith("inpolor_catalog_institutions");
     expect(from).not.toHaveBeenCalledWith("inpolor_catalog_programmes");
     expect(from).not.toHaveBeenCalledWith("universities");
+    expect(selectedColumns.get("shared_catalog_institutions")).toContain("university_id");
     expect(result.universities).toHaveLength(1);
     expect(result.universities[0]).toMatchObject({ id: "university-1", name: "Universiti Sebenar", courses: ["Diploma Sains Komputer"] });
     expect(result.reviewTargets).toEqual([{ id: "university-1", name: "Universiti Sebenar", location: null, courses: ["Diploma Sains Komputer"] }]);
@@ -39,9 +46,9 @@ describe("live INPOLOR catalogue", () => {
 
   it("fails closed when the verified catalogue cannot be read", async () => {
     from.mockImplementation((table: string) => {
-      if (table === "shared_catalog_institutions") return ordered({ data: null, error: { message: "denied" } });
+      if (table === "shared_catalog_institutions") return ordered(table, { data: null, error: { message: "denied" } });
       if (table === "shared_catalog_programmes" || table === "inpolor_university_summaries") return selected({ data: [], error: null });
-      return ordered({ data: [], error: null });
+      return ordered(table, { data: [], error: null });
     });
 
     const result = await loadCommunityDirectory();

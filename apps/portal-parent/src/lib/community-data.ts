@@ -31,7 +31,7 @@ export async function loadCommunityDirectory(): Promise<{ universities: Universi
   try {
     const { supabase } = await import("@repo/database");
     const [universitiesResult, programmesResult, summariesResult, reviewsResult] = await Promise.all([
-      supabase.from("shared_catalog_institutions").select("reference_institution_id,institution_name,institution_previous_name,programme_count").order("institution_name"),
+      supabase.from("shared_catalog_institutions").select("reference_institution_id,university_id,institution_name,institution_previous_name,programme_count").order("institution_name"),
       supabase.from("shared_catalog_programmes").select("reference_institution_id,qualification_name"),
       supabase.from("inpolor_university_summaries").select("*"),
       supabase.from("published_reviews").select("*").order("created_at", { ascending: false }),

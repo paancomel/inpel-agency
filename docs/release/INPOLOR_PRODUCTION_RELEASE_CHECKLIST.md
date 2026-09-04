@@ -6,7 +6,7 @@ Target: INPOLOR public production release
 
 App: `apps/portal-parent`
 
-Last audit snapshot: 16 August 2026
+Last audit snapshot: 5 September 2026
 
 This checklist translates the approved INPOLOR product specification into a production release path. It does not authorize production changes by itself. Record the operator, UTC timestamp, commit SHA, target identifiers, command/result, and evidence link for every completed gate.
 
@@ -14,13 +14,14 @@ This checklist translates the approved INPOLOR product specification into a prod
 
 At the audit snapshot:
 
-- Git remote is `https://github.com/paancomel/inpel-agency.git`, branch `main`, commit `8872208`.
-- The working tree contains many modified and untracked files. A release commit cannot safely be assembled until the intended INPOLOR/database/documentation diff is separated from unrelated work.
+- The current staging implementation was pushed on branch `codex/inpolor-public-launch` at commit `a1f5ede`; it is not a production release candidate. Record a fresh immutable SHA before any production gate.
+- Canonical disposable staging is project `xrmrhjgkttxzvwdsjazs`; local and remote migration histories match at 35 migrations. Docker/local Supabase, `db reset`, and `migration repair` are prohibited for this repository.
 - `apps/portal-parent/.vercel/project.json` points to Vercel project `inpolor-staging` (`prj_Vn599nhnXy5MssDAzWrmhcopvdlv`). There is no repository evidence of a separately linked production Vercel project.
 - The repository is linked to Supabase project ref `xrmrhjgkttxzvwdsjazs`, documented as disposable staging. There is no repository evidence of an approved production Supabase project ref or matching remote migration history.
 - `supabase/config.toml` references `supabase/seed.sql`, but that file does not exist.
-- The checked-in INPOLOR implementation at the audit snapshot is still the earlier prototype: five-star overall rating, short/quick review unlock, device-local fallback, three sample reviews, email magic link only, and a minimal public feed. It does not yet prove the approved launch workflows (eight 1–10 ratings, full/reward review, photo processing, Google sign-in, age gate, moderation queues, claims, Q&A, comparison, notifications, bilingual UI, or role-separated admin).
-- No checked-in browser automation currently proves the production journeys.
+- The staging catalogue has 756 MQA-source-backed institutions, each linked to a real `universities.id` and published for INPOLOR. This is staging catalogue availability, not approval of a 756-institution production launch.
+- An authenticated staging review submission reached `submitted` and its QA account/data were removed. The portal must use `university_id` for review submission; `reference_institution_id` is source/catalogue identity only and is correctly rejected by the RPC.
+- The full responsive browser journey matrix on an actual Vercel preview is still unproven because the connected Vercel API returns project-scope `403`.
 - The Vercel CLI is not installed as a global executable in the audited environment. Use a pinned project/dev dependency or a pinned `pnpm dlx vercel@<reviewed-version>` invocation; do not depend on `@latest` during release.
 - Supabase CLI access in the restricted desktop environment cannot write its telemetry file. Run database verification in an approved unrestricted release shell or through the project-scoped Supabase MCP connection.
 
