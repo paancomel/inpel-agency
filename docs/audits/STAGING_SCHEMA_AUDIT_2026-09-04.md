@@ -35,14 +35,16 @@ The Supabase CLI login-role path can return `403`, but direct staging connection
 
 ## Required next work
 
-1. Run the broader local quality gates (typecheck, lint, test, build) against the final release candidate.
-2. Add a focused authenticated INPOLOR submission test for `submit_inpolor_review`; the existing integration audit now correctly proves that the legacy anonymous endpoint is denied.
-3. Perform the required browser journey matrix and production/legal/operations gates before any production release.
+1. Add a focused authenticated INPOLOR submission test for `submit_inpolor_review`; the existing integration audit now correctly proves that the legacy anonymous endpoint is denied.
+2. Perform the required browser journey matrix and production/legal/operations gates before any production release.
+3. Consider code-splitting the INPEL portal's main JavaScript bundle, which currently exceeds Vite's 500 kB warning threshold. This is not a build failure.
 
 ## Verification evidence
 
 - `pnpm test:integration` passed on 4 September 2026 after the fixture was aligned with the current parent-preference contract and legacy anonymous review endpoint policy.
 - Post-run staging query found zero `qa-audit-*` profiles, `QA Audit` universities/courses, test sessions, or test reviews.
+- Local quality gates passed on 4 September 2026: `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build`.
+- The full test suite initially exposed stale declaration-audit test references after migration reconciliation; the contract test now locks the canonical migration's current declaration receipt and authenticated-RPC contract.
 
 ## Explicitly out of scope
 
